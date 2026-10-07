@@ -129,6 +129,7 @@ int run(int argc, const char* const* argv) {
   mr::Message m;
   std::vector<std::int64_t> lateness;
   std::uint64_t bytes = 0;
+  std::uint64_t messages = 0;
   std::int64_t first_ts = 0;
   bool first = true;
   Clock::time_point wall0;
@@ -163,12 +164,12 @@ int run(int argc, const char* const* argv) {
       sink->deliver(m);
     }
     bytes += m.payload.size();
+    ++messages;
   }
   const double elapsed = std::chrono::duration<double>(Clock::now() - run_start).count();
-  const std::size_t count = *speed > 0 ? lateness.size() : 0;
   const auto p = mr::cli::percentiles(lateness);
   std::cout << std::format("replayed {} messages ({:.2f} MB) in {:.3f} s at speed {}x, sink={} digest={:x}\n",
-                           *speed > 0 ? count : static_cast<std::size_t>(0), static_cast<double>(bytes) / 1e6,
+                           messages, static_cast<double>(bytes) / 1e6,
                            elapsed, *speed, args.get("sink"), sink->digest());
   if (*speed > 0) {
     std::cout << std::format(
@@ -182,7 +183,7 @@ int run(int argc, const char* const* argv) {
     out << std::format(
         "{{\"file\": \"{}\", \"speed\": {}, \"spin_us\": {}, \"messages\": {}, \"bytes\": {}, \"elapsed_s\": {:.6f}, "
         "\"lateness_us\": {{\"p50\": {:.2f}, \"p90\": {:.2f}, \"p99\": {:.2f}, \"p999\": {:.2f}, \"max\": {:.2f}}}}}\n",
-        path.string(), *speed, *spin_us, lateness.size(), bytes, elapsed, p.p50_ns / 1e3, p.p90_ns / 1e3,
+        path.string(), *speed, *spin_us, messages, bytes, elapsed, p.p50_ns / 1e3, p.p90_ns / 1e3,
         p.p99_ns / 1e3, p.p999_ns / 1e3, p.max_ns / 1e3);
   }
   return 0;
