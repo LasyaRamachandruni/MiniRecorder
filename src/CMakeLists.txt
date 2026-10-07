@@ -2,10 +2,12 @@ add_library(minirecorder
   chunk.cpp
   file_util.cpp
   crc32c.cpp
+  events.cpp
   format.cpp
   record.cpp
   reader.cpp
   record_ring.cpp
+  recovery.cpp
   writer.cpp
   result.cpp
 )
