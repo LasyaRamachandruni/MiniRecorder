@@ -1,0 +1,10 @@
+/build*/
+/out/
+.cache/
+compile_commands.json
+*.mrlog
+*.mrlog.partial
+/fuzz/corpus-run/
+crash-*
+leak-*
+timeout-*
