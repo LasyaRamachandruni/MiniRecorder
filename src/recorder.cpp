@@ -188,9 +188,12 @@ struct Recorder::Impl {
     for (Stream& s : streams) {
       const std::uint64_t lost = s.ring->counters().lost();
       if (lost > s.reported_lost) {
+        // Before the first record of a stream was collected there is no
+        // sensor timestamp yet; fall back to the clock the sensors use.
+        const std::int64_t ts = s.last_ts != 0 ? s.last_ts : to_ns(Clock::now());
         MR_RETURN_IF_ERROR(emit_event({.stream = s.id,
                                        .kind = EventKind::kRecordsDropped,
-                                       .timestamp_ns = s.last_ts,
+                                       .timestamp_ns = ts,
                                        .value = static_cast<std::int64_t>(lost - s.reported_lost),
                                        .expected = 0}));
         s.reported_lost = lost;
