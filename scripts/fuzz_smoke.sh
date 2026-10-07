@@ -8,10 +8,9 @@ SECONDS_TO_RUN=${1:-60}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 BUILD="$ROOT/build-fuzz"
 
-CXX=clang++ cmake -S "$ROOT" -B "$BUILD" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DMR_BUILD_FUZZERS=ON -DMR_BUILD_TESTS=OFF -DMR_BUILD_BENCHMARKS=OFF \
-  -DMR_SANITIZE=address,undefined >/dev/null
-cmake --build "$BUILD" --target fuzz_chunk fuzz_make_seeds
+cd "$ROOT"
+cmake --preset fuzz >/dev/null
+cmake --build --preset fuzz --target fuzz_chunk fuzz_make_seeds
 
 CORPUS="$BUILD/corpus"
 mkdir -p "$CORPUS"

@@ -80,8 +80,8 @@ class [[nodiscard]] Result {
  public:
   // Implicit by design so that `return value;` and `return make_error(...);`
   // both work, mirroring std::expected.
-  Result(T value) : value_(std::in_place_index<1>, std::move(value)) {}  // NOLINT
-  Result(Error error) : error_(std::move(error)) {}                      // NOLINT
+  Result(T value) : value_(std::in_place_index<1>, std::move(value)) {}
+  Result(Error error) : error_(std::move(error)) {}
 
   [[nodiscard]] bool ok() const noexcept { return value_.index() == 1; }
   explicit operator bool() const noexcept { return ok(); }
@@ -122,7 +122,7 @@ template <>
 class [[nodiscard]] Result<void> {
  public:
   Result() = default;
-  Result(Error error) : ok_(false), error_(std::move(error)) {}  // NOLINT
+  Result(Error error) : ok_(false), error_(std::move(error)) {}
 
   [[nodiscard]] bool ok() const noexcept { return ok_; }
   explicit operator bool() const noexcept { return ok(); }

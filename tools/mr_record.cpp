@@ -18,8 +18,8 @@
 namespace {
 
 // Set from the signal handler; lock-free atomics are async-signal-safe.
-std::atomic<bool> g_interrupted{
-    false};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+std::atomic<bool> g_interrupted{false};
 static_assert(std::atomic<bool>::is_always_lock_free);
 
 extern "C" void on_signal(int /*sig*/) {

@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  APT_PACKAGES: >-
+    ninja-build libzstd-dev libgtest-dev libbenchmark-dev
+    clang clang-tidy clang-format libclang-rt-18-dev
+
+jobs:
+  build-test:
+    name: ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [gcc-release, clang-release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y $APT_PACKAGES
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+  sanitizers:
+    name: ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: asan
+            tests: ""
+          - preset: tsan
+            # Concurrency-heavy suites: rings, writer pipeline, recorder, crash test.
+            tests: "SpscQueue|RecordRing|StorageWriter|Recorder|Kitti|CrashKill|e2e_smoke"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y $APT_PACKAGES
+      - name: Reduce ASLR entropy for TSan
+        # TSan on recent runner kernels fails with "unexpected memory mapping"
+        # at the default 32 bits of mmap randomization.
+        if: matrix.preset == 'tsan'
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+        run: ctest --preset ${{ matrix.preset }} ${{ matrix.tests && format('-R "{0}"', matrix.tests) || '' }}
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y $APT_PACKAGES
+      - name: clang-format and clang-tidy
+        run: scripts/lint.sh
+
+  fuzz-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y $APT_PACKAGES
+      - name: Fuzz chunk/record/footer parsers for 60 s
+        run: scripts/fuzz_smoke.sh 60
+
+  e2e-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y $APT_PACKAGES
+      - name: Build tools
+        run: |
+          cmake --preset gcc-release -DMR_BUILD_TESTS=OFF -DMR_BUILD_BENCHMARKS=OFF
+          cmake --build --preset gcc-release
+      - name: Record 5 s, SIGKILL, recover, inspect, replay
+        run: scripts/e2e_smoke.sh build-gcc-release/tools

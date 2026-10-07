@@ -41,8 +41,8 @@ Status FileDescriptor::close() {
 
 Result<FileDescriptor> open_file(const std::filesystem::path& path, int flags, unsigned mode) {
   // open(2) is variadic by POSIX definition.
-  const int fd = ::open(path.c_str(), flags | O_CLOEXEC,
-                        static_cast<mode_t>(mode));  // NOLINT(cppcoreguidelines-pro-type-vararg)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+  const int fd = ::open(path.c_str(), flags | O_CLOEXEC, static_cast<mode_t>(mode));
   if (fd < 0) {
     return io_error("open " + path.string(), errno);
   }
@@ -178,8 +178,7 @@ MappedFile::~MappedFile() {
 void MappedFile::unmap() noexcept {
   if (data_ != nullptr) {
     // munmap takes a non-const pointer; the mapping itself is read-only.
-    ::munmap(const_cast<std::byte*>(data_),
-             size_);  // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    ::munmap(const_cast<std::byte*>(data_), size_);  // NOLINT(*-const-cast)
     data_ = nullptr;
     size_ = 0;
   }
