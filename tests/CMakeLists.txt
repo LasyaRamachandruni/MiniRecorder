@@ -19,3 +19,12 @@ mr_add_test(test_trigger test_trigger.cpp)
 mr_add_test(test_privacy test_privacy.cpp)
 mr_add_test(test_recorder test_recorder.cpp)
 mr_add_test(test_kitti test_kitti.cpp)
+
+# End-to-end: spawns the real mr_record binary and SIGKILLs it.
+mr_add_test(test_crash_kill test_crash_kill.cpp)
+target_compile_definitions(test_crash_kill PRIVATE MR_RECORD_PATH="$<TARGET_FILE:mr_record>")
+add_dependencies(test_crash_kill mr_record)
+
+add_test(NAME e2e_smoke
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/e2e_smoke.sh $<TARGET_FILE_DIR:mr_record>)
+set_tests_properties(e2e_smoke PROPERTIES LABELS e2e TIMEOUT 120)
