@@ -7,3 +7,5 @@ function(mr_add_test name)
 endfunction()
 
 mr_add_test(test_crc32c test_crc32c.cpp)
+mr_add_test(test_spsc_queue test_spsc_queue.cpp)
+mr_add_test(test_record_ring test_record_ring.cpp)
