@@ -1,6 +1,6 @@
 MiniRecorder verification run
-date:   2026-10-07T20:04:27Z
-commit: 8070665
+date:   2026-10-07T20:19:32Z
+commit: 4722233
 host:   Intel(R) Xeon(R) Processor @ 2.10GHz, 2 vCPU
 
 ctest --preset gcc-release: 100% tests passed, 0 tests failed out of 94
@@ -11,11 +11,11 @@ ctest --preset tsan: 100% tests passed, 0 tests failed out of 94
 scripts/lint.sh: clang-format clean on all C++ files; clang-tidy clean on src/ and tools/
 
 scripts/fuzz_smoke.sh 60 (libFuzzer + ASan + UBSan):
-  stat::number_of_executed_units: 3415625
-  stat::average_exec_per_sec:     55993
-  stat::new_units_added:          100
-  stat::peak_rss_mb:              559
-  #3415625	DONE   cov: 419 ft: 1021 corp: 166/68Kb lim: 4096 exec/s: 55993 rss: 559Mb
+  stat::number_of_executed_units: 3997715
+  stat::average_exec_per_sec:     65536
+  stat::new_units_added:          69
+  stat::peak_rss_mb:              542
+  #3997715	DONE   cov: 422 ft: 1028 corp: 168/64Kb lim: 4096 exec/s: 65536 rss: 542Mb
   no crashes, leaks or sanitizer reports
 
 SIGKILL crash test (build-gcc-release/tests/test_crash_kill):
@@ -28,4 +28,4 @@ SIGKILL crash test (build-gcc-release/tests/test_crash_kill):
     fsync = interval:50
     durable_reported = 25
     chunks_recovered = 25
-    bytes_discarded = 160467
+    bytes_discarded = 0

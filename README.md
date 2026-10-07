@@ -91,7 +91,7 @@ Correctness checks (`bench/results/verification.txt`): 94 CTest tests (93
 GoogleTest cases plus the end-to-end script) pass with GCC and Clang Release,
 ASan+UBSan and TSan; clang-format and clang-tidy (bugprone, cppcoreguidelines,
 performance, concurrency, clang-analyzer, ...) are clean on the library and
-tools; the libFuzzer target ran 3.4 M inputs in 60 s with ASan+UBSan without
+tools; the libFuzzer target ran 4.0 M inputs in 60 s with ASan+UBSan without
 findings.
 
 ## Design decisions and trade-offs
