@@ -19,6 +19,8 @@ benchmark:   1.8.3-3
 build:       CMake Release (-O3 -DNDEBUG), GCC unless noted
 ```
 
+Google Benchmark 1.8.3 from the Ubuntu package prints "Library was built as DEBUG"; that refers to the benchmark library itself. The code under test is built with `-O3 -DNDEBUG`.
+
 ## Ring buffer (Google Benchmark, median of 5)
 
 Command: `bench/run_micro.sh` (`bench_ring --benchmark_repetitions=5 --benchmark_min_time=0.2s`).

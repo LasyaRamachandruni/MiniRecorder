@@ -38,6 +38,8 @@ w("")
 w("```")
 w((RES / "machine.txt").read_text().split("\nlscpu:")[0].rstrip())
 w("```\n")
+w("Google Benchmark 1.8.3 from the Ubuntu package prints \"Library was built as DEBUG\"; that "
+  "refers to the benchmark library itself. The code under test is built with `-O3 -DNDEBUG`.\n")
 
 # ---------------------------------------------------------------- micro: ring
 ring = micro_rows("micro_ring.json")
