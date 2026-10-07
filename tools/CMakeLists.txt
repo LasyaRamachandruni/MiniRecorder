@@ -8,3 +8,4 @@ function(mr_add_tool name)
 endfunction()
 
 mr_add_tool(mr_recover)
+mr_add_tool(mr_record)
