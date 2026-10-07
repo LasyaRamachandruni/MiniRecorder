@@ -9,3 +9,5 @@ endfunction()
 
 mr_add_tool(mr_recover)
 mr_add_tool(mr_record)
+mr_add_tool(mr_inspect)
+mr_add_tool(mr_replay)
