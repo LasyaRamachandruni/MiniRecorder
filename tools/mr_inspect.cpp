@@ -67,12 +67,13 @@ void print_summary(const mr::Reader& r, const std::filesystem::path& path) {
         info != nullptr ? info->nominal_rate_hz : 0.0, measured, s.records, mb(s.payload_bytes),
         mb(s.stored_bytes),
         s.stored_bytes > 0
-            ? static_cast<double>(s.payload_bytes) / static_cast<double>(s.stored_bytes)
+            ? static_cast<double>(s.payload_bytes + s.records * mr::format::kRecordHeaderSize) /
+                  static_cast<double>(s.stored_bytes)
             : 0.0,
         s.dropped, s.seq_gaps, s.ts_regressions, s.rate_events, s.stale_events);
   }
-  std::cout
-      << "\n(ratio = payload bytes / chunk bytes on disk; chunk bytes include record headers)\n";
+  std::cout << "\n(ratio = uncompressed record bytes, including 24-byte record headers, / bytes on "
+               "disk)\n";
 }
 
 int print_events(const mr::Reader& r, std::int64_t limit) {
