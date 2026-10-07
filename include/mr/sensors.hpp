@@ -108,7 +108,7 @@ struct SensorCounters {
 // enqueue_ns is the real steady-clock push time used for latency metrics.
 class SensorProducer {
  public:
-  SensorProducer(SensorConfig config, std::unique_ptr<SignalGenerator> generator, RecordRing& ring);
+  SensorProducer(const SensorConfig& config, std::unique_ptr<SignalGenerator> generator, RecordRing& ring);
 
   void run(const std::stop_token& stop, std::chrono::steady_clock::time_point start);
   [[nodiscard]] SensorCounters counters() const noexcept;

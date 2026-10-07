@@ -50,8 +50,8 @@ std::uint32_t extend_portable(std::uint32_t crc, std::span<const std::byte> data
   const std::size_t n = data.size();
 
   for (; i + 8 <= n; i += 8) {
-    const std::uint32_t lo = load_le<std::uint32_t>(&data[i]) ^ l;
-    const std::uint32_t hi = load_le<std::uint32_t>(&data[i + 4]);
+    const auto lo = load_le<std::uint32_t>(&data[i]) ^ l;
+    const auto hi = load_le<std::uint32_t>(&data[i + 4]);
     l = kTables[7][lo & 0xFFU] ^ kTables[6][(lo >> 8) & 0xFFU] ^ kTables[5][(lo >> 16) & 0xFFU] ^
         kTables[4][lo >> 24] ^ kTables[3][hi & 0xFFU] ^ kTables[2][(hi >> 8) & 0xFFU] ^
         kTables[1][(hi >> 16) & 0xFFU] ^ kTables[0][hi >> 24];
@@ -80,7 +80,7 @@ __attribute__((target("sse4.2"))) std::uint32_t extend_hw(
 }
 
 bool hw_available() noexcept {
-  static const bool available = __builtin_cpu_supports("sse4.2") != 0;
+  static const bool available = __builtin_cpu_supports("sse4.2") != 0;  // NOLINT(readability-implicit-bool-conversion)
   return available;
 }
 

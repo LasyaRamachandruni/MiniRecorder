@@ -96,7 +96,7 @@ Status Reader::read_chunk(std::size_t chunk_index, ZstdDecompressor& decompresso
 }
 
 MessageIterator Reader::messages(const ReadOptions& options) const {
-  return MessageIterator(*this, options);
+  return {*this, options};
 }
 
 // ---------------------------------------------------------------- iterator

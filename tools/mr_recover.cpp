@@ -28,7 +28,7 @@ int run(int argc, const char* const* argv) {
     std::cout << args.usage();
     return 0;
   }
-  const std::filesystem::path input = *args.get_positional(0);
+  const std::filesystem::path input = args.get_positional(0).value_or(std::string{});
   const std::filesystem::path output =
       args.get("output").empty() ? mr::default_recovery_output(input) : std::filesystem::path(args.get("output"));
   const mr::RecoveryOptions options{.verify_records = !args.is_set("no-verify"),

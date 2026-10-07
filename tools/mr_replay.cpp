@@ -83,7 +83,7 @@ int run(int argc, const char* const* argv) {
     }
   }
 
-  const std::filesystem::path path = *args.get_positional(0);
+  const std::filesystem::path path = args.get_positional(0).value_or(std::string{});
   auto reader = mr::Reader::open(path);
   if (!reader) {
     std::cerr << "mr_replay: " << path.string() << ": " << reader.error().describe() << "\n";

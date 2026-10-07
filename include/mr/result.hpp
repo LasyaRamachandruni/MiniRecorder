@@ -13,7 +13,6 @@
 // base stays on C++20.
 
 #include <cassert>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -55,7 +54,7 @@ enum class Errc {
 }
 
 struct Error {
-  Errc code;
+  Errc code = Errc::kIo;
   std::string message;
 
   [[nodiscard]] std::string describe() const {
@@ -73,37 +72,40 @@ struct Error {
 // Builds an kIo error that includes strerror(errno_value).
 [[nodiscard]] Error io_error(std::string_view what, int errno_value);
 
+// The error is stored as a plain member next to the value rather than in a
+// shared variant: it costs one empty std::string per Result but keeps the
+// error path trivially initialized, which also keeps static analysis quiet.
 template <typename T>
 class [[nodiscard]] Result {
  public:
   // Implicit by design so that `return value;` and `return make_error(...);`
   // both work, mirroring std::expected.
-  Result(T value) : storage_(std::in_place_index<0>, std::move(value)) {}  // NOLINT
-  Result(Error error) : storage_(std::in_place_index<1>, std::move(error)) {}  // NOLINT
+  Result(T value) : value_(std::in_place_index<1>, std::move(value)) {}  // NOLINT
+  Result(Error error) : error_(std::move(error)) {}                     // NOLINT
 
-  [[nodiscard]] bool ok() const noexcept { return storage_.index() == 0; }
+  [[nodiscard]] bool ok() const noexcept { return value_.index() == 1; }
   explicit operator bool() const noexcept { return ok(); }
 
   [[nodiscard]] T& value() & {
     assert(ok());
-    return std::get<0>(storage_);
+    return std::get<1>(value_);
   }
   [[nodiscard]] const T& value() const& {
     assert(ok());
-    return std::get<0>(storage_);
+    return std::get<1>(value_);
   }
   [[nodiscard]] T&& value() && {
     assert(ok());
-    return std::get<0>(std::move(storage_));
+    return std::get<1>(std::move(value_));
   }
 
   [[nodiscard]] const Error& error() const& {
     assert(!ok());
-    return std::get<1>(storage_);
+    return error_;
   }
   [[nodiscard]] Error&& error() && {
     assert(!ok());
-    return std::get<1>(std::move(storage_));
+    return std::move(error_);
   }
 
   T* operator->() { return &value(); }
@@ -112,29 +114,31 @@ class [[nodiscard]] Result {
   const T& operator*() const& { return value(); }
 
  private:
-  std::variant<T, Error> storage_;
+  std::variant<std::monostate, T> value_;
+  Error error_;
 };
 
 template <>
 class [[nodiscard]] Result<void> {
  public:
   Result() = default;
-  Result(Error error) : error_(std::move(error)) {}  // NOLINT
+  Result(Error error) : ok_(false), error_(std::move(error)) {}  // NOLINT
 
-  [[nodiscard]] bool ok() const noexcept { return !error_.has_value(); }
+  [[nodiscard]] bool ok() const noexcept { return ok_; }
   explicit operator bool() const noexcept { return ok(); }
 
   [[nodiscard]] const Error& error() const& {
     assert(!ok());
-    return *error_;
+    return error_;
   }
   [[nodiscard]] Error&& error() && {
     assert(!ok());
-    return std::move(*error_);
+    return std::move(error_);
   }
 
  private:
-  std::optional<Error> error_;
+  bool ok_ = true;
+  Error error_;
 };
 
 using Status = Result<void>;
@@ -143,10 +147,13 @@ using Status = Result<void>;
 
 }  // namespace mr
 
-// Propagates the error of a Status/Result expression to the caller.
+// Propagates the error of a Status/Result expression to the caller. A macro
+// because it has to `return` from the calling function.
+// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #define MR_RETURN_IF_ERROR(expr)              \
   do {                                        \
     if (auto mr_status_ = (expr); !mr_status_) { \
       return std::move(mr_status_).error();   \
     }                                         \
   } while (false)
+// NOLINTEND(cppcoreguidelines-macro-usage)

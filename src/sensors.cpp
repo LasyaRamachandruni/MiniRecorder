@@ -104,7 +104,11 @@ class WheelGenerator final : public SignalGenerator {
 class CameraGenerator final : public SignalGenerator {
  public:
   CameraGenerator(std::uint16_t width, std::uint16_t height, std::uint64_t seed)
-      : width_(width), height_(height), tex_w_(2U * width), tex_h_(2U * height), noise_state_(seed | 1U) {
+      : width_(width),
+        height_(height),
+        tex_w_(std::size_t{2} * width),
+        tex_h_(std::size_t{2} * height),
+        noise_state_(seed | 1U) {
     build_texture(seed);
   }
 
@@ -255,9 +259,9 @@ std::unique_ptr<SignalGenerator> make_camera_generator(std::uint16_t width, std:
 
 // ---------------------------------------------------------------- producer
 
-SensorProducer::SensorProducer(SensorConfig config, std::unique_ptr<SignalGenerator> generator,
+SensorProducer::SensorProducer(const SensorConfig& config, std::unique_ptr<SignalGenerator> generator,
                                RecordRing& ring)
-    : config_(std::move(config)), generator_(std::move(generator)), ring_(&ring), rng_(config_.seed) {}
+    : config_(config), generator_(std::move(generator)), ring_(&ring), rng_(config_.seed) {}
 
 void SensorProducer::run(const std::stop_token& stop, Clock::time_point start) {
   const double rate = std::max(config_.rate_hz, 1e-3);

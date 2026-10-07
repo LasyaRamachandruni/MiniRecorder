@@ -72,7 +72,7 @@ Result<FileHeader> decode_file_header(ByteSpan data) {
   if (data.size() < header_size) {
     return truncated("file header truncated");
   }
-  const std::uint32_t stored_crc = load_le<std::uint32_t>(data.data() + header_size - 4);
+  const auto stored_crc = load_le<std::uint32_t>(data.data() + header_size - 4);
   if (crc32c::value(data.first(header_size - 4)) != stored_crc) {
     return corrupt("file header CRC mismatch");
   }

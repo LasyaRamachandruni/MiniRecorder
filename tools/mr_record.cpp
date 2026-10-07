@@ -18,7 +18,9 @@
 
 namespace {
 
-std::atomic<bool> g_interrupted{false};
+// Set from the signal handler; lock-free atomics are async-signal-safe.
+std::atomic<bool> g_interrupted{false};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+static_assert(std::atomic<bool>::is_always_lock_free);
 
 extern "C" void on_signal(int /*sig*/) { g_interrupted.store(true); }
 
@@ -150,10 +152,7 @@ void write_summary_json(const std::string& path, const mr::RecorderConfig& cfg,
   out << "  ]\n}\n";
 }
 
-int run(int argc, const char* const* argv) {
-  mr::cli::ArgParser args("mr_record",
-                          "Records simulated vehicle sensors (IMU, GPS, wheel CAN, camera) into a\n"
-                          "crash-safe chunked log. Data is synthetic unless --kitti is given.");
+void declare_options(mr::cli::ArgParser& args) {
   args.option("out", "output file (written as <out>.partial until closed)", "recording.mrlog");
   args.option("duration", "seconds to record", "10");
   args.option("mode", "continuous | triggered", "continuous");
@@ -185,19 +184,16 @@ int run(int argc, const char* const* argv) {
   args.option("summary-json", "write a JSON summary here", "");
   args.option("progress-fd", "write 'durable <chunks>' lines to this fd after each sync", "-1");
   args.flag("quiet", "no progress output");
-  if (auto s = args.parse(argc, argv); !s) {
-    std::cerr << "mr_record: " << s.error().message << "\n\n" << args.usage();
-    return 2;
-  }
-  if (args.help_requested()) {
-    std::cout << args.usage();
-    return 0;
-  }
+}
 
-  auto fail = [](const mr::Error& e) {
-    std::cerr << "mr_record: " << e.describe() << "\n";
-    return 2;
-  };
+struct Job {
+  mr::RecorderConfig cfg;
+  double duration_s = 0;
+  bool quiet = false;
+  std::string summary_json;
+};
+
+mr::Result<Job> build_job(const mr::cli::ArgParser& args) {
   // Collects the first parse error so option handling stays linear.
   std::optional<mr::Error> parse_error;
   auto take = [&parse_error]<typename T>(mr::Result<T> r) -> T {
@@ -230,11 +226,11 @@ int run(int argc, const char* const* argv) {
   const std::int64_t seed = take(args.get_int("seed"));
   const std::int64_t progress_fd = take(args.get_int("progress-fd"));
   if (parse_error) {
-    return fail(*parse_error);
+    return *parse_error;
   }
   if (chunk_kb <= 0 || threads <= 0 || inflight <= 0 || chunk_age <= 0) {
-    return fail(mr::make_error(mr::Errc::kInvalidArgument,
-                               "chunk-kb, chunk-age-ms, compression-threads and inflight must be positive"));
+    return mr::make_error(mr::Errc::kInvalidArgument,
+                          "chunk-kb, chunk-age-ms, compression-threads and inflight must be positive");
   }
 
   // Streams.
@@ -254,9 +250,10 @@ int run(int argc, const char* const* argv) {
     unsigned w = 0;
     unsigned h = 0;
     double hz = 0;
-    if (std::sscanf(args.get("camera").c_str(), "%ux%u@%lf", &w, &h, &hz) != 3 || w == 0 || h == 0 ||  // NOLINT
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,cert-err34-c): simple fixed format
+    if (std::sscanf(args.get("camera").c_str(), "%ux%u@%lf", &w, &h, &hz) != 3 || w == 0 || h == 0 ||
         w > 4096 || h > 4096 || !(hz > 0)) {
-      return fail(mr::make_error(mr::Errc::kInvalidArgument, "--camera expects WIDTHxHEIGHT@HZ"));
+      return mr::make_error(mr::Errc::kInvalidArgument, "--camera expects WIDTHxHEIGHT@HZ");
     }
     add_stream("camera_front", mr::SensorKind::kCamera, hz, 16);
     cfg.streams.back().camera_width = static_cast<std::uint16_t>(w);
@@ -265,23 +262,23 @@ int run(int argc, const char* const* argv) {
   if (!args.get("faults").empty()) {
     auto faults = parse_faults(args.get("faults"));
     if (!faults) {
-      return fail(faults.error());
+      return faults.error();
     }
     for (auto& s : cfg.streams) {
       s.faults = *faults;
     }
   }
   if (auto st = apply_per_stream(args.get("policy"), cfg.streams, true); !st) {
-    return fail(st.error());
+    return st.error();
   }
   if (auto st = apply_per_stream(args.get("ring"), cfg.streams, false); !st) {
-    return fail(st.error());
+    return st.error();
   }
 
   // Writer.
   auto fsync = mr::parse_fsync_policy(args.get("fsync"));
   if (!fsync) {
-    return fail(fsync.error());
+    return fsync.error();
   }
   cfg.writer.fsync = *fsync;
   cfg.writer.zstd_level = static_cast<int>(level);
@@ -304,7 +301,7 @@ int run(int argc, const char* const* argv) {
   if (mode == "triggered") {
     cfg.mode = mr::RecordMode::kTriggered;
   } else if (mode != "continuous") {
-    return fail(mr::make_error(mr::Errc::kInvalidArgument, "--mode must be continuous or triggered"));
+    return mr::make_error(mr::Errc::kInvalidArgument, "--mode must be continuous or triggered");
   }
   cfg.trigger.pre_window = std::chrono::milliseconds(static_cast<std::int64_t>(pre * 1000));
   cfg.trigger.post_window = std::chrono::milliseconds(static_cast<std::int64_t>(post * 1000));
@@ -318,7 +315,7 @@ int run(int argc, const char* const* argv) {
   for (const std::string& roi_text : mr::cli::split(args.get("roi"), ';')) {
     auto roi = mr::parse_roi(roi_text);
     if (!roi) {
-      return fail(roi.error());
+      return roi.error();
     }
     cfg.privacy.camera_rois.push_back(*roi);
   }
@@ -329,7 +326,39 @@ int run(int argc, const char* const* argv) {
     cfg.kitti_oxts_dir = args.get("kitti");
   }
 
-  auto recorder = mr::Recorder::create(cfg);
+
+  return Job{.cfg = std::move(cfg),
+             .duration_s = duration,
+             .quiet = args.is_set("quiet"),
+             .summary_json = args.get("summary-json")};
+}
+
+void print_report(const mr::RecorderReport& r) {
+  const mr::WriterMetrics& m = r.write.metrics;
+  std::cout << std::format(
+      "wrote {} ({} records, {} chunks, {:.1f} MB on disk, {:.1f} MB of records, ratio {:.2f})\n"
+      "elapsed {:.2f} s: {:.0f} records/s, {:.1f} MB/s of records, {:.1f} MB/s to disk\n"
+      "quality events: {}, triggers: {}\n",
+      r.write.path.string(), m.records_written, m.chunks_written, static_cast<double>(m.file_bytes) / 1e6,
+      static_cast<double>(m.record_bytes) / 1e6,
+      m.file_bytes > 0 ? static_cast<double>(m.record_bytes) / static_cast<double>(m.file_bytes) : 0.0,
+      r.elapsed_s, static_cast<double>(m.records_written) / r.elapsed_s,
+      static_cast<double>(m.record_bytes) / 1e6 / r.elapsed_s,
+      static_cast<double>(m.file_bytes) / 1e6 / r.elapsed_s, r.quality_events, r.triggers);
+  for (const auto& s : r.streams) {
+    std::cout << std::format("  {:<13} produced {:>8}  dropped {:>6}  evicted {:>6}  blocked {:.3f} s\n",
+                             s.name, s.sensor.emitted, s.ring.dropped_newest, s.ring.evicted_oldest,
+                             static_cast<double>(s.ring.blocked_ns) / 1e9);
+  }
+}
+
+int fail(const mr::Error& e) {
+  std::cerr << "mr_record: " << e.describe() << "\n";
+  return 2;
+}
+
+int record(const Job& job) {
+  auto recorder = mr::Recorder::create(job.cfg);
   if (!recorder) {
     return fail(recorder.error());
   }
@@ -338,14 +367,13 @@ int run(int argc, const char* const* argv) {
   if (auto st = (*recorder)->start(); !st) {
     return fail(st.error());
   }
-  const bool quiet = args.is_set("quiet");
   const auto t0 = std::chrono::steady_clock::now();
   const auto end = t0 + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-                            std::chrono::duration<double>(duration));
+                            std::chrono::duration<double>(job.duration_s));
   auto next_print = t0 + std::chrono::seconds(1);
   while (std::chrono::steady_clock::now() < end && !g_interrupted.load()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    if (!quiet && std::chrono::steady_clock::now() >= next_print) {
+    if (!job.quiet && std::chrono::steady_clock::now() >= next_print) {
       next_print += std::chrono::seconds(1);
       std::cerr << std::format("  {:.0f}s  {} records collected\n",
                                std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(),
@@ -356,29 +384,33 @@ int run(int argc, const char* const* argv) {
   if (!report) {
     return fail(report.error());
   }
-  const mr::RecorderReport& r = report.value();
-  const mr::WriterMetrics& m = r.write.metrics;
-  if (!quiet) {
-    std::cout << std::format(
-        "wrote {} ({} records, {} chunks, {:.1f} MB on disk, {:.1f} MB of records, ratio {:.2f})\n"
-        "elapsed {:.2f} s: {:.0f} records/s, {:.1f} MB/s of records, {:.1f} MB/s to disk\n"
-        "quality events: {}, triggers: {}\n",
-        r.write.path.string(), m.records_written, m.chunks_written, static_cast<double>(m.file_bytes) / 1e6,
-        static_cast<double>(m.record_bytes) / 1e6,
-        m.file_bytes > 0 ? static_cast<double>(m.record_bytes) / static_cast<double>(m.file_bytes) : 0.0,
-        r.elapsed_s, static_cast<double>(m.records_written) / r.elapsed_s,
-        static_cast<double>(m.record_bytes) / 1e6 / r.elapsed_s,
-        static_cast<double>(m.file_bytes) / 1e6 / r.elapsed_s, r.quality_events, r.triggers);
-    for (const auto& s : r.streams) {
-      std::cout << std::format("  {:<13} produced {:>8}  dropped {:>6}  evicted {:>6}  blocked {:.3f} s\n",
-                               s.name, s.sensor.emitted, s.ring.dropped_newest, s.ring.evicted_oldest,
-                               static_cast<double>(s.ring.blocked_ns) / 1e9);
-    }
+  if (!job.quiet) {
+    print_report(report.value());
   }
-  if (!args.get("summary-json").empty()) {
-    write_summary_json(args.get("summary-json"), cfg, r);
+  if (!job.summary_json.empty()) {
+    write_summary_json(job.summary_json, job.cfg, report.value());
   }
   return 0;
+}
+
+int run(int argc, const char* const* argv) {
+  mr::cli::ArgParser args("mr_record",
+                          "Records simulated vehicle sensors (IMU, GPS, wheel CAN, camera) into a\n"
+                          "crash-safe chunked log. Data is synthetic unless --kitti is given.");
+  declare_options(args);
+  if (auto s = args.parse(argc, argv); !s) {
+    std::cerr << "mr_record: " << s.error().message << "\n\n" << args.usage();
+    return 2;
+  }
+  if (args.help_requested()) {
+    std::cout << args.usage();
+    return 0;
+  }
+  auto job = build_job(args);
+  if (!job) {
+    return fail(job.error());
+  }
+  return record(job.value());
 }
 
 }  // namespace

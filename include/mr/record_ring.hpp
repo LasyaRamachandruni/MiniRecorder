@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -122,7 +123,9 @@ class OwnedCounter {
 
 }  // namespace detail
 
-class RecordRing {
+// The members are deliberately laid out on separate cache lines, which the
+// padding analyzer flags as wasted space.
+class RecordRing {  // NOLINT(clang-analyzer-optin.performance.Padding)
  public:
   static constexpr std::size_t kSlotHeaderBytes = 64;
   static_assert(sizeof(RingHeader) <= kSlotHeaderBytes);
@@ -154,7 +157,7 @@ class RecordRing {
     std::byte* slot = slot_at(head);
     const RingHeader header{meta, enqueue_ns, static_cast<std::uint32_t>(payload_size)};
     std::memcpy(slot, &header, sizeof(header));
-    fill(MutableByteSpan(slot + kSlotHeaderBytes, payload_size));
+    std::invoke(std::forward<Fill>(fill), MutableByteSpan(slot + kSlotHeaderBytes, payload_size));
     head_.store(head + 1, std::memory_order_release);
     producer_.pushed.add();
     return PushResult::kOk;
@@ -196,7 +199,8 @@ class RecordRing {
     const std::byte* slot = slot_at(tail);
     RingHeader header;
     std::memcpy(&header, slot, sizeof(header));
-    visit(static_cast<const RingHeader&>(header), ByteSpan(slot + kSlotHeaderBytes, header.payload_size));
+    std::invoke(std::forward<Visit>(visit), static_cast<const RingHeader&>(header),
+                ByteSpan(slot + kSlotHeaderBytes, header.payload_size));
     tail_.store(tail + 1, std::memory_order_release);
     return true;
   }

@@ -91,10 +91,11 @@ struct Recorder::Impl {
   std::vector<Stream> streams;
   std::unique_ptr<KittiOxtsReplay> kitti;
   std::unique_ptr<StorageWriter> writer;
-  std::optional<QualityMonitor> quality;
-  std::optional<TriggerDetector> detector;
-  std::optional<EventWindow> window;
-  std::optional<PrivacyFilter> privacy;
+  // Constructed once in create(); never null afterwards.
+  std::unique_ptr<QualityMonitor> quality;
+  std::unique_ptr<TriggerDetector> detector;
+  std::unique_ptr<EventWindow> window;
+  std::unique_ptr<PrivacyFilter> privacy;
 
   std::vector<std::jthread> producer_threads;
   std::jthread collector_thread;
@@ -111,10 +112,6 @@ struct Recorder::Impl {
   std::uint64_t quality_event_count = 0;
   std::optional<Error> collector_error;
 
-  Status persist(const RecordMeta& meta, ByteSpan payload, std::int64_t enqueue_ns) {
-    return writer->append(meta, payload, enqueue_ns);
-  }
-
   Status emit_event(const QualityEvent& e) {
     accumulate_event(e, quality_counters);
     if (e.kind != EventKind::kTrigger) {
@@ -122,8 +119,9 @@ struct Recorder::Impl {
     }
     std::array<std::byte, kEventPayloadSize> buf{};
     encode_event(e, buf);
-    return persist({.timestamp_ns = e.timestamp_ns, .seq = event_seq++, .stream_id = kEventStreamId, .flags = 0},
-                   buf, to_ns(Clock::now()));
+    return writer->append(
+        {.timestamp_ns = e.timestamp_ns, .seq = event_seq++, .stream_id = kEventStreamId, .flags = 0}, buf,
+        to_ns(Clock::now()));
   }
 
   Status fire_trigger(TriggerReason reason, StreamId source, std::int64_t ts) {
@@ -149,7 +147,7 @@ struct Recorder::Impl {
       MR_RETURN_IF_ERROR(window->on_record(header.meta, payload, header.enqueue_ns));
       reason = detector->observe(s.setup.kind, header.meta, payload);
     } else {
-      MR_RETURN_IF_ERROR(persist(header.meta, payload, header.enqueue_ns));
+      MR_RETURN_IF_ERROR(writer->append(header.meta, payload, header.enqueue_ns));
     }
 
     for (const QualityEvent& e : events) {
@@ -353,20 +351,19 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
         std::move(*kitti_samples), *kitti_imu, *kitti_gps);
   }
 
-  impl->scratch.resize(max_payload);
-  impl->quality.emplace(cfg.quality, monitored);
-  impl->detector.emplace(cfg.trigger);
-  impl->privacy.emplace(cfg.privacy);
-  Impl* raw = impl.get();
-  impl->window.emplace(cfg.trigger, [raw](const RecordMeta& m, ByteSpan p, std::int64_t e) {
-    return raw->persist(m, p, e);
-  });
-
   auto writer = StorageWriter::open(std::move(wopts));
   if (!writer) {
     return std::move(writer).error();
   }
   impl->writer = std::move(writer).value();
+
+  impl->scratch.resize(max_payload);
+  impl->quality = std::make_unique<QualityMonitor>(cfg.quality, monitored);
+  impl->detector = std::make_unique<TriggerDetector>(cfg.trigger);
+  impl->privacy = std::make_unique<PrivacyFilter>(cfg.privacy);
+  StorageWriter* w = impl->writer.get();
+  impl->window = std::make_unique<EventWindow>(
+      cfg.trigger, [w](const RecordMeta& m, ByteSpan p, std::int64_t e) { return w->append(m, p, e); });
   return std::make_unique<Recorder>(PrivateTag{}, std::move(impl));
 }
 
@@ -380,7 +377,7 @@ Status Recorder::start() {
   s.started_at = Clock::now() + std::chrono::milliseconds(5);
   Impl* raw = impl_.get();
   s.collector_thread = std::jthread([raw] { raw->collector_main(); });
-  for (Impl::Stream& st : s.streams) {
+  for (const Impl::Stream& st : s.streams) {
     if (st.producer) {
       SensorProducer* p = st.producer.get();
       const auto start = s.started_at;

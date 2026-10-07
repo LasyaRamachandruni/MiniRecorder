@@ -35,7 +35,7 @@ class PrivacyFilter {
   explicit PrivacyFilter(PrivacyConfig config);
 
   // Rewrites `payload` in place. Returns true if the record was modified.
-  bool apply(SensorKind kind, MutableByteSpan payload) const noexcept;
+  [[nodiscard]] bool apply(SensorKind kind, MutableByteSpan payload) const noexcept;
 
   [[nodiscard]] bool enabled() const noexcept {
     return config_.gps_decimals.has_value() || !config_.camera_rois.empty();

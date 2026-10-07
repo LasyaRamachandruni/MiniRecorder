@@ -134,7 +134,7 @@ int run(int argc, const char* const* argv) {
     std::cout << args.usage();
     return 0;
   }
-  const std::filesystem::path path = *args.get_positional(0);
+  const std::filesystem::path path = args.get_positional(0).value_or(std::string{});
   auto reader = mr::Reader::open(path);
   if (!reader) {
     std::cerr << "mr_inspect: " << path.string() << ": " << reader.error().describe() << "\n";

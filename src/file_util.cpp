@@ -41,7 +41,8 @@ Status FileDescriptor::close() {
 }
 
 Result<FileDescriptor> open_file(const std::filesystem::path& path, int flags, unsigned mode) {
-  const int fd = ::open(path.c_str(), flags | O_CLOEXEC, static_cast<mode_t>(mode));
+  // open(2) is variadic by POSIX definition.
+  const int fd = ::open(path.c_str(), flags | O_CLOEXEC, static_cast<mode_t>(mode));  // NOLINT(cppcoreguidelines-pro-type-vararg)
   if (fd < 0) {
     return io_error("open " + path.string(), errno);
   }
