@@ -38,7 +38,8 @@ class ZstdDecompressor {
  public:
   ZstdDecompressor();
   // Decompresses `in`, which must expand to exactly `expected_size` bytes.
-  [[nodiscard]] Status decompress(ByteSpan in, std::size_t expected_size, std::vector<std::byte>& out);
+  [[nodiscard]] Status decompress(ByteSpan in, std::size_t expected_size,
+                                  std::vector<std::byte>& out);
 
  private:
   struct Deleter {

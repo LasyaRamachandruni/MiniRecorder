@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
-
 #include <cstdint>
 #include <cstring>
 #include <random>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/chunk.hpp>
 #include <mr/format.hpp>
@@ -34,9 +34,12 @@ BuiltChunk build_records(int count, bool compressible) {
   BuiltChunk b;
   b.meta.chunk_seq = 5;
   for (int i = 0; i < count; ++i) {
-    mr::RecordMeta m{.timestamp_ns = 1'000'000 + i * 5'000, .seq = static_cast<std::uint64_t>(i),
-                     .stream_id = static_cast<mr::StreamId>(i % 3), .flags = 0};
-    b.payloads.push_back(make_payload(static_cast<std::size_t>(i * 7 % 300), static_cast<std::uint64_t>(i), compressible));
+    mr::RecordMeta m{.timestamp_ns = 1'000'000 + i * 5'000,
+                     .seq = static_cast<std::uint64_t>(i),
+                     .stream_id = static_cast<mr::StreamId>(i % 3),
+                     .flags = 0};
+    b.payloads.push_back(make_payload(static_cast<std::size_t>(i * 7 % 300),
+                                      static_cast<std::uint64_t>(i), compressible));
     fmt::append_record(b.records, m, b.payloads.back());
     b.meta.record_count++;
     b.meta.stream_mask |= std::uint64_t{1} << m.stream_id;
@@ -49,8 +52,10 @@ BuiltChunk build_records(int count, bool compressible) {
 TEST(FileHeader, RoundTrip) {
   fmt::FileHeader h;
   h.created_unix_ns = 1'700'000'000'000'000'000;
-  h.streams.push_back({.id = 0, .kind = mr::SensorKind::kImu, .nominal_rate_hz = 200.0, .name = "imu"});
-  h.streams.push_back({.id = 3, .kind = mr::SensorKind::kCamera, .nominal_rate_hz = 29.97, .name = "camera_front"});
+  h.streams.push_back(
+      {.id = 0, .kind = mr::SensorKind::kImu, .nominal_rate_hz = 200.0, .name = "imu"});
+  h.streams.push_back(
+      {.id = 3, .kind = mr::SensorKind::kCamera, .nominal_rate_hz = 29.97, .name = "camera_front"});
   const auto bytes = fmt::encode_file_header(h);
   auto decoded = fmt::decode_file_header(bytes);
   ASSERT_TRUE(decoded) << decoded.error().describe();
@@ -64,9 +69,11 @@ TEST(FileHeader, RoundTrip) {
 
 TEST(FileHeader, DetectsCorruptionAndTruncation) {
   fmt::FileHeader h;
-  h.streams.push_back({.id = 1, .kind = mr::SensorKind::kGps, .nominal_rate_hz = 10.0, .name = "gps"});
+  h.streams.push_back(
+      {.id = 1, .kind = mr::SensorKind::kGps, .nominal_rate_hz = 10.0, .name = "gps"});
   auto bytes = fmt::encode_file_header(h);
-  EXPECT_EQ(fmt::decode_file_header(ByteSpan(bytes).first(bytes.size() - 1)).error().code, Errc::kTruncated);
+  EXPECT_EQ(fmt::decode_file_header(ByteSpan(bytes).first(bytes.size() - 1)).error().code,
+            Errc::kTruncated);
   bytes[40] ^= std::byte{1};
   EXPECT_EQ(fmt::decode_file_header(bytes).error().code, Errc::kCorrupt);
   bytes[0] = std::byte{'X'};
@@ -86,7 +93,8 @@ TEST(Records, ParserRoundTripAndBounds) {
     }
     EXPECT_EQ(rec.meta.seq, static_cast<std::uint64_t>(n));
     ASSERT_EQ(rec.payload.size(), b.payloads[static_cast<std::size_t>(n)].size());
-    EXPECT_TRUE(std::equal(rec.payload.begin(), rec.payload.end(), b.payloads[static_cast<std::size_t>(n)].begin()));
+    EXPECT_TRUE(std::equal(rec.payload.begin(), rec.payload.end(),
+                           b.payloads[static_cast<std::size_t>(n)].begin()));
     ++n;
   }
   EXPECT_EQ(n, 50);
@@ -200,13 +208,31 @@ TEST(Footer, RoundTripAndCrc) {
   fmt::Footer f;
   f.start_time_ns = 10;
   f.end_time_ns = 99;
-  f.chunks.push_back({.offset = 100, .stream_mask = 1, .min_time_ns = 10, .max_time_ns = 50,
-                      .record_count = 3, .total_size = 200, .uncompressed_size = 300});
-  f.chunks.push_back({.offset = 300, .stream_mask = 2, .min_time_ns = 20, .max_time_ns = 99,
-                      .record_count = 4, .total_size = 100, .uncompressed_size = 400});
-  f.streams.push_back({.id = 0, .records = 3, .payload_bytes = 30, .stored_bytes = 200,
-                       .first_time_ns = 10, .last_time_ns = 50, .dropped = 1, .seq_gaps = 2,
-                       .ts_regressions = 3, .rate_events = 4, .stale_events = 5});
+  f.chunks.push_back({.offset = 100,
+                      .stream_mask = 1,
+                      .min_time_ns = 10,
+                      .max_time_ns = 50,
+                      .record_count = 3,
+                      .total_size = 200,
+                      .uncompressed_size = 300});
+  f.chunks.push_back({.offset = 300,
+                      .stream_mask = 2,
+                      .min_time_ns = 20,
+                      .max_time_ns = 99,
+                      .record_count = 4,
+                      .total_size = 100,
+                      .uncompressed_size = 400});
+  f.streams.push_back({.id = 0,
+                       .records = 3,
+                       .payload_bytes = 30,
+                       .stored_bytes = 200,
+                       .first_time_ns = 10,
+                       .last_time_ns = 50,
+                       .dropped = 1,
+                       .seq_gaps = 2,
+                       .ts_regressions = 3,
+                       .rate_events = 4,
+                       .stale_events = 5});
   const std::uint64_t footer_offset = 400;
   std::vector<std::byte> file(footer_offset, std::byte{0});
   const auto encoded = fmt::encode_footer(f, footer_offset);
@@ -232,8 +258,13 @@ TEST(Footer, RoundTripAndCrc) {
 
 TEST(Footer, RejectsIndexPointingPastData) {
   fmt::Footer f;
-  f.chunks.push_back({.offset = 390, .stream_mask = 1, .min_time_ns = 0, .max_time_ns = 0,
-                      .record_count = 1, .total_size = 100, .uncompressed_size = 24});
+  f.chunks.push_back({.offset = 390,
+                      .stream_mask = 1,
+                      .min_time_ns = 0,
+                      .max_time_ns = 0,
+                      .record_count = 1,
+                      .total_size = 100,
+                      .uncompressed_size = 24});
   std::vector<std::byte> file(400, std::byte{0});
   const auto encoded = fmt::encode_footer(f, 400);
   file.insert(file.end(), encoded.begin(), encoded.end());

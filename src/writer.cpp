@@ -1,7 +1,3 @@
-#include <mr/writer.hpp>
-
-#include <fcntl.h>
-
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -9,6 +5,7 @@
 #include <charconv>
 #include <condition_variable>
 #include <deque>
+#include <fcntl.h>
 #include <map>
 #include <mutex>
 #include <semaphore>
@@ -17,6 +14,7 @@
 
 #include <mr/chunk.hpp>
 #include <mr/file_util.hpp>
+#include <mr/writer.hpp>
 
 namespace mr {
 namespace {
@@ -104,9 +102,9 @@ Result<FsyncPolicy> parse_fsync_policy(std::string_view text) {
       return FsyncPolicy{FsyncMode::kInterval, std::chrono::milliseconds(ms)};
     }
   }
-  return make_error(Errc::kInvalidArgument,
-                    "fsync policy must be 'chunk', 'close' or 'interval:<ms>', got '" +
-                        std::string(text) + "'");
+  return make_error(
+      Errc::kInvalidArgument,
+      "fsync policy must be 'chunk', 'close' or 'interval:<ms>', got '" + std::string(text) + "'");
 }
 
 std::string describe(const FsyncPolicy& policy) {
@@ -270,7 +268,8 @@ struct StorageWriter::Impl {
                          .uncompressed_size = h.uncompressed_size});
         offset += chunk.bytes.size();
         if (std::popcount(h.stream_mask) == 1) {
-          stored_bytes[static_cast<std::size_t>(std::countr_zero(h.stream_mask))] += chunk.bytes.size();
+          stored_bytes[static_cast<std::size_t>(std::countr_zero(h.stream_mask))] +=
+              chunk.bytes.size();
         }
         ++metrics.chunks_written;
         metrics.records_written += h.record_count;
@@ -388,7 +387,8 @@ struct StorageWriter::Impl {
   }
 };
 
-StorageWriter::StorageWriter(PrivateTag /*tag*/, std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+StorageWriter::StorageWriter(PrivateTag /*tag*/, std::unique_ptr<Impl> impl)
+    : impl_(std::move(impl)) {}
 
 StorageWriter::~StorageWriter() {
   if (impl_ && !impl_->closed) {
@@ -396,7 +396,9 @@ StorageWriter::~StorageWriter() {
   }
 }
 
-const std::filesystem::path& StorageWriter::partial_file() const noexcept { return impl_->partial; }
+const std::filesystem::path& StorageWriter::partial_file() const noexcept {
+  return impl_->partial;
+}
 
 Result<std::unique_ptr<StorageWriter>> StorageWriter::open(WriterOptions options) {
   if (options.max_inflight_chunks == 0 ||
@@ -417,7 +419,8 @@ Result<std::unique_ptr<StorageWriter>> StorageWriter::open(WriterOptions options
                                .count();
   for (const format::StreamInfo& s : impl->opts.streams) {
     if (s.id >= kMaxStreams || (impl->known_streams & (std::uint64_t{1} << s.id)) != 0) {
-      return make_error(Errc::kInvalidArgument, "invalid or duplicate stream id " + std::to_string(s.id));
+      return make_error(Errc::kInvalidArgument,
+                        "invalid or duplicate stream id " + std::to_string(s.id));
     }
     if (s.name.size() > format::kStreamNameMax) {
       return make_error(Errc::kInvalidArgument, "stream name too long: " + s.name);
@@ -455,8 +458,10 @@ Status StorageWriter::append(const RecordMeta& meta, ByteSpan payload, std::int6
   if (s.failed.load(std::memory_order_acquire)) {
     return s.current_error();
   }
-  if (meta.stream_id >= kMaxStreams || (s.known_streams & (std::uint64_t{1} << meta.stream_id)) == 0) {
-    return make_error(Errc::kInvalidArgument, "record for undeclared stream " + std::to_string(meta.stream_id));
+  if (meta.stream_id >= kMaxStreams ||
+      (s.known_streams & (std::uint64_t{1} << meta.stream_id)) == 0) {
+    return make_error(Errc::kInvalidArgument,
+                      "record for undeclared stream " + std::to_string(meta.stream_id));
   }
   if (payload.size() > format::kMaxRecordPayload) {
     return make_error(Errc::kInvalidArgument, "record payload exceeds limit");
@@ -549,7 +554,8 @@ Result<WriteSummary> StorageWriter::close() {
     st.rate_events = q.rate_events;
     st.stale_events = q.stale_events;
     if (st.records > 0) {
-      footer.start_time_ns = any ? std::min(footer.start_time_ns, st.first_time_ns) : st.first_time_ns;
+      footer.start_time_ns =
+          any ? std::min(footer.start_time_ns, st.first_time_ns) : st.first_time_ns;
       footer.end_time_ns = any ? std::max(footer.end_time_ns, st.last_time_ns) : st.last_time_ns;
       any = true;
     }

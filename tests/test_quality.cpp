@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/quality.hpp>
 
@@ -115,7 +115,11 @@ TEST_F(QualityTest, UnmonitoredStreamIgnored) {
 }
 
 TEST(EventCodec, RoundTripAndAccumulate) {
-  const QualityEvent e{.stream = 4, .kind = EventKind::kRecordsDropped, .timestamp_ns = -5, .value = 12, .expected = 7};
+  const QualityEvent e{.stream = 4,
+                       .kind = EventKind::kRecordsDropped,
+                       .timestamp_ns = -5,
+                       .value = 12,
+                       .expected = 7};
   std::array<std::byte, mr::kEventPayloadSize> buf{};
   mr::encode_event(e, buf);
   const auto d = mr::decode_event(buf);

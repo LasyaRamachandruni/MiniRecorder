@@ -20,14 +20,14 @@
 namespace mr {
 
 enum class EventKind : std::uint16_t {
-  kSeqGap = 1,              // value = number of missing sequence numbers
-  kTimestampRegression = 2, // value = how far back the timestamp jumped (ns)
-  kRateOutOfBounds = 3,     // value = measured rate (mHz), expected = nominal (mHz)
-  kRateRecovered = 4,       // value = measured rate (mHz)
-  kStreamStale = 5,         // value = silence so far (ns)
-  kStreamResumed = 6,       // value = total silence (ns)
-  kTrigger = 7,             // value = TriggerReason, expected = window end (ns)
-  kRecordsDropped = 8,      // value = records lost in the ring since last report
+  kSeqGap = 1,               // value = number of missing sequence numbers
+  kTimestampRegression = 2,  // value = how far back the timestamp jumped (ns)
+  kRateOutOfBounds = 3,      // value = measured rate (mHz), expected = nominal (mHz)
+  kRateRecovered = 4,        // value = measured rate (mHz)
+  kStreamStale = 5,          // value = silence so far (ns)
+  kStreamResumed = 6,        // value = total silence (ns)
+  kTrigger = 7,              // value = TriggerReason, expected = window end (ns)
+  kRecordsDropped = 8,       // value = records lost in the ring since last report
 };
 
 enum class TriggerReason : std::uint16_t {

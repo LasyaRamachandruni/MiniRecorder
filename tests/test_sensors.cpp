@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
 #include <thread>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/chunk.hpp>
 #include <mr/sensors.hpp>
@@ -21,7 +21,9 @@ TEST(VehicleModel, HardBrakePhaseHasStrongDeceleration) {
   EXPECT_NEAR(mr::vehicle_state(p, 51.0).speed_mps, mr::vehicle_state(p, 21.0).speed_mps, 1e-9);
   // Speed is continuous across phase boundaries.
   for (const double t : {20.0, 22.0, 29.0, 30.0}) {
-    EXPECT_NEAR(mr::vehicle_state(p, t - 1e-6).speed_mps, mr::vehicle_state(p, t + 1e-6).speed_mps, 1e-3) << t;
+    EXPECT_NEAR(mr::vehicle_state(p, t - 1e-6).speed_mps, mr::vehicle_state(p, t + 1e-6).speed_mps,
+                1e-3)
+        << t;
   }
 }
 
@@ -91,7 +93,8 @@ TEST(SensorProducer, UnpacedProducerEmitsSequentialRecordsWithInjectedGaps) {
   cfg.faults.regression_probability = 0.05;
   mr::SensorProducer producer(cfg, mr::make_imu_generator({}, 1), ring);
 
-  std::jthread t([&](const std::stop_token& st) { producer.run(st, std::chrono::steady_clock::now()); });
+  std::jthread t(
+      [&](const std::stop_token& st) { producer.run(st, std::chrono::steady_clock::now()); });
   std::uint64_t popped = 0;
   std::uint64_t gaps = 0;
   std::uint64_t regressions = 0;
@@ -128,7 +131,8 @@ TEST(SensorProducer, RealTimePacingHonoursRate) {
   cfg.rate_hz = 200.0;
   mr::SensorProducer producer(cfg, mr::make_imu_generator({}, 1), ring);
   {
-    std::jthread t([&](const std::stop_token& st) { producer.run(st, std::chrono::steady_clock::now()); });
+    std::jthread t(
+        [&](const std::stop_token& st) { producer.run(st, std::chrono::steady_clock::now()); });
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   // ~100 samples in 0.5 s; generous bounds for a shared CI machine.

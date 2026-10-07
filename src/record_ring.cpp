@@ -1,6 +1,6 @@
-#include <mr/record_ring.hpp>
-
 #include <chrono>
+
+#include <mr/record_ring.hpp>
 
 namespace mr {
 namespace {

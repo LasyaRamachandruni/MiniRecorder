@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
-
 #include <algorithm>
 #include <random>
 #include <tuple>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/reader.hpp>
 
@@ -34,13 +34,15 @@ std::vector<mr::Message> read_all(const mr::Reader& reader, const mr::ReadOption
 }
 
 // Reference ordering the merge must reproduce.
-std::vector<WrittenRecord> expected_order(std::vector<WrittenRecord> recs, const mr::ReadOptions& opts) {
+std::vector<WrittenRecord> expected_order(std::vector<WrittenRecord> recs,
+                                          const mr::ReadOptions& opts) {
   std::erase_if(recs, [&](const WrittenRecord& r) {
     return (opts.stream_mask & (std::uint64_t{1} << r.meta.stream_id)) == 0 ||
            r.meta.timestamp_ns < opts.start_ns || r.meta.timestamp_ns > opts.end_ns;
   });
   std::stable_sort(recs.begin(), recs.end(), [](const WrittenRecord& a, const WrittenRecord& b) {
-    return std::tie(a.meta.timestamp_ns, a.meta.stream_id) < std::tie(b.meta.timestamp_ns, b.meta.stream_id);
+    return std::tie(a.meta.timestamp_ns, a.meta.stream_id) <
+           std::tie(b.meta.timestamp_ns, b.meta.stream_id);
   });
   return recs;
 }
@@ -167,7 +169,8 @@ TEST(Reader, OverlappingChunkRangesStillSeekCorrectly) {
     mr::ReadOptions ro;
     ro.start_ns = start;
     const auto msgs = read_all(*r, ro);
-    const auto want = std::count_if(ts.begin(), ts.end(), [start](std::int64_t t) { return t >= start; });
+    const auto want =
+        std::count_if(ts.begin(), ts.end(), [start](std::int64_t t) { return t >= start; });
     EXPECT_EQ(static_cast<std::ptrdiff_t>(msgs.size()), want) << "start " << start;
   }
 }

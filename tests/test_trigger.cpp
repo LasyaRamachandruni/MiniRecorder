@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/sensor_types.hpp>
 #include <mr/sensors.hpp>
@@ -62,7 +62,8 @@ TEST(TriggerDetector, ImuDetectionIsSmoothed) {
 
 TEST(TriggerDetector, QualityFaultTriggerIsOptIn) {
   mr::TriggerConfig cfg;
-  const mr::QualityEvent gap{.stream = 0, .kind = mr::EventKind::kSeqGap, .timestamp_ns = 1, .value = 2};
+  const mr::QualityEvent gap{
+      .stream = 0, .kind = mr::EventKind::kSeqGap, .timestamp_ns = 1, .value = 2};
   EXPECT_FALSE(mr::TriggerDetector(cfg).observe(gap));
   cfg.on_quality_fault = true;
   EXPECT_EQ(mr::TriggerDetector(cfg).observe(gap), mr::TriggerReason::kQualityFault);
@@ -85,7 +86,8 @@ class EventWindowTest : public ::testing::Test {
   void feed(mr::EventWindow& w, int from_ms, int to_ms) {
     const std::vector<std::byte> payload(8);
     for (int t = from_ms; t < to_ms; t += 10) {
-      ASSERT_TRUE(w.on_record({.timestamp_ns = t * kMs, .seq = static_cast<std::uint64_t>(t)}, payload, 0));
+      ASSERT_TRUE(
+          w.on_record({.timestamp_ns = t * kMs, .seq = static_cast<std::uint64_t>(t)}, payload, 0));
     }
   }
   mr::TriggerConfig cfg_;

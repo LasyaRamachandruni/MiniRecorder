@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
 #include <atomic>
 #include <filesystem>
+
+#include <gtest/gtest.h>
 
 #include <mr/chunk.hpp>
 #include <mr/file_util.hpp>
@@ -93,7 +93,8 @@ TEST(StorageWriter, DestructorWithoutCloseLeavesPartialFile) {
     ASSERT_TRUE(writer);
     for (std::uint64_t i = 0; i < 200; ++i) {
       const auto p = mr::test::test_payload(0, i, 64);
-      ASSERT_TRUE((*writer)->append({.timestamp_ns = static_cast<std::int64_t>(i), .seq = i}, p, 0));
+      ASSERT_TRUE(
+          (*writer)->append({.timestamp_ns = static_cast<std::int64_t>(i), .seq = i}, p, 0));
     }
   }
   EXPECT_FALSE(std::filesystem::exists(path));
@@ -137,7 +138,8 @@ TEST(StorageWriter, SealAgedFlushesSlowStreams) {
   ASSERT_TRUE(writer);
   const auto p = mr::test::test_payload(0, 0, 10);
   ASSERT_TRUE((*writer)->append({.timestamp_ns = 1}, p, 0));
-  ASSERT_TRUE((*writer)->seal_aged(std::chrono::steady_clock::now() + std::chrono::milliseconds(5)));
+  ASSERT_TRUE(
+      (*writer)->seal_aged(std::chrono::steady_clock::now() + std::chrono::milliseconds(5)));
   ASSERT_TRUE((*writer)->append({.timestamp_ns = 2, .seq = 1}, p, 0));
   auto summary = (*writer)->close();
   ASSERT_TRUE(summary);

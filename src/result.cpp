@@ -1,6 +1,6 @@
-#include <mr/result.hpp>
-
 #include <cstring>
+
+#include <mr/result.hpp>
 
 namespace mr {
 

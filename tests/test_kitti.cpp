@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-
 #include <format>
 #include <fstream>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 #include <mr/kitti.hpp>
 #include <mr/reader.hpp>

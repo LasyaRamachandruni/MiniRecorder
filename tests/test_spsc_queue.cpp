@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-
 #include <cstdint>
 #include <memory>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 #include <mr/spsc_queue.hpp>
 

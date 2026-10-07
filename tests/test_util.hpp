@@ -2,15 +2,14 @@
 
 // Shared helpers for tests: temporary directories and small record files.
 
-#include <gtest/gtest.h>
-
-#include <unistd.h>
-
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <unistd.h>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/writer.hpp>
 
@@ -93,10 +92,11 @@ inline std::vector<WrittenRecord> write_test_file(const std::filesystem::path& p
   std::vector<WrittenRecord> written;
   for (int i = 0; i < per_stream; ++i) {
     for (int s = 0; s < streams; ++s) {
-      const RecordMeta meta{.timestamp_ns = 1'000'000'000LL + static_cast<std::int64_t>(i) * (s + 1) * 1'000'000,
-                            .seq = static_cast<std::uint64_t>(i),
-                            .stream_id = static_cast<StreamId>(s),
-                            .flags = 0};
+      const RecordMeta meta{
+          .timestamp_ns = 1'000'000'000LL + static_cast<std::int64_t>(i) * (s + 1) * 1'000'000,
+          .seq = static_cast<std::uint64_t>(i),
+          .stream_id = static_cast<StreamId>(s),
+          .flags = 0};
       const std::size_t size = 16 + static_cast<std::size_t>((i * 13 + s * 5) % 200);
       const auto payload = test_payload(meta.stream_id, meta.seq, size);
       EXPECT_TRUE((*writer)->append(meta, payload, 0));

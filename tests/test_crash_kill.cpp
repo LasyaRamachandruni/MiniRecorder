@@ -3,18 +3,17 @@
 // recorder had reported durable (and possibly more) is back, and that only a
 // torn tail smaller than one chunk was discarded.
 
-#include <gtest/gtest.h>
-
+#include <chrono>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <spawn.h>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-
-#include <chrono>
-#include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/file_util.hpp>
 #include <mr/reader.hpp>
@@ -33,7 +32,8 @@ struct Child {
   int progress_read_fd = -1;
 };
 
-Child spawn_recorder(const std::filesystem::path& out, const std::string& fsync, int extra_seconds) {
+Child spawn_recorder(const std::filesystem::path& out, const std::string& fsync,
+                     int extra_seconds) {
   int fds[2];
   if (::pipe(fds) != 0) {
     ADD_FAILURE() << "pipe failed";
@@ -41,9 +41,11 @@ Child spawn_recorder(const std::filesystem::path& out, const std::string& fsync,
   }
   const std::string progress = std::to_string(fds[1]);
   const std::string duration = std::to_string(extra_seconds);
-  std::vector<std::string> argv_s{MR_RECORD_PATH, "--out", out.string(), "--duration", duration,
-                                  "--fsync", fsync, "--chunk-kb", "256", "--camera", "320x240@30",
-                                  "--rate-scale", "4", "--progress-fd", progress, "--quiet"};
+  std::vector<std::string> argv_s{
+      MR_RECORD_PATH, "--out",        out.string(), "--duration",    duration,
+      "--fsync",      fsync,          "--chunk-kb", "256",           "--camera",
+      "320x240@30",   "--rate-scale", "4",          "--progress-fd", progress,
+      "--quiet"};
   std::vector<char*> argv;
   for (auto& s : argv_s) {
     argv.push_back(s.data());
@@ -101,7 +103,8 @@ TEST_P(CrashKill, SigkillMidWriteThenRecoverKeepsAllDurableChunks) {
   const Child child = spawn_recorder(out, GetParam(), 60);
   ASSERT_GT(child.pid, 0);
 
-  const std::uint64_t durable = wait_for_durable(child.progress_read_fd, 25, std::chrono::seconds(30));
+  const std::uint64_t durable =
+      wait_for_durable(child.progress_read_fd, 25, std::chrono::seconds(30));
   ASSERT_GE(durable, 25U) << "recorder did not make progress";
   ASSERT_EQ(::kill(child.pid, SIGKILL), 0);
   int status = 0;
@@ -125,7 +128,8 @@ TEST_P(CrashKill, SigkillMidWriteThenRecoverKeepsAllDurableChunks) {
   // have been written between the last report and SIGKILL).
   EXPECT_GE(report->chunks_recovered, durable);
   // Only a torn tail can be discarded: less than one maximal chunk.
-  EXPECT_LT(report->bytes_discarded, mr::format::kChunkHeaderSize + 2U * 256 * 1024 + 320 * 240 + 64);
+  EXPECT_LT(report->bytes_discarded,
+            mr::format::kChunkHeaderSize + 2U * 256 * 1024 + 320 * 240 + 64);
 
   auto reader = mr::Reader::open(out);
   ASSERT_TRUE(reader) << reader.error().describe();
@@ -133,7 +137,8 @@ TEST_P(CrashKill, SigkillMidWriteThenRecoverKeepsAllDurableChunks) {
   std::vector<std::byte> body;
   std::uint64_t records = 0;
   for (const auto& c : reader->footer().chunks) {
-    auto h = mr::parse_and_verify_chunk(reader->file_bytes().subspan(c.offset, c.total_size), dec, body);
+    auto h =
+        mr::parse_and_verify_chunk(reader->file_bytes().subspan(c.offset, c.total_size), dec, body);
     ASSERT_TRUE(h) << h.error().describe();
     records += h->record_count;
   }
@@ -147,7 +152,8 @@ TEST_P(CrashKill, SigkillMidWriteThenRecoverKeepsAllDurableChunks) {
 
 INSTANTIATE_TEST_SUITE_P(FsyncPolicies, CrashKill, ::testing::Values("chunk", "interval:50"),
                          [](const auto& param_info) {
-                           return param_info.param == "chunk" ? std::string("PerChunk") : std::string("Interval");
+                           return param_info.param == "chunk" ? std::string("PerChunk")
+                                                              : std::string("Interval");
                          });
 
 }  // namespace

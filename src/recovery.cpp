@@ -1,10 +1,7 @@
-#include <mr/recovery.hpp>
-
-#include <fcntl.h>
-
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <fcntl.h>
 #include <format>
 #include <vector>
 
@@ -13,6 +10,7 @@
 #include <mr/events.hpp>
 #include <mr/file_util.hpp>
 #include <mr/format.hpp>
+#include <mr/recovery.hpp>
 
 namespace mr {
 namespace {
@@ -163,7 +161,8 @@ Result<RecoveryReport> recover_file(const std::filesystem::path& input,
     if (options.verify_records) {
       auto verified = parse_and_verify_chunk(chunk, decompressor, body);
       if (!verified) {
-        report.stop_reason = std::format("{} in chunk at offset {}", verified.error().message, offset);
+        report.stop_reason =
+            std::format("{} in chunk at offset {}", verified.error().message, offset);
         break;
       }
       format::RecordParser parser(body);
@@ -229,7 +228,8 @@ Result<RecoveryReport> recover_file(const std::filesystem::path& input,
     st.rate_events = q.rate_events;
     st.stale_events = q.stale_events;
     if (st.records > 0) {
-      footer.start_time_ns = any ? std::min(footer.start_time_ns, st.first_time_ns) : st.first_time_ns;
+      footer.start_time_ns =
+          any ? std::min(footer.start_time_ns, st.first_time_ns) : st.first_time_ns;
       footer.end_time_ns = any ? std::max(footer.end_time_ns, st.last_time_ns) : st.last_time_ns;
       any = true;
     }

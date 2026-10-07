@@ -1,6 +1,6 @@
-#include <mr/sensor_types.hpp>
-
 #include <cstring>
+
+#include <mr/sensor_types.hpp>
 
 namespace mr {
 
@@ -50,7 +50,7 @@ std::optional<ImuSample> decode_imu(ByteSpan payload) noexcept {
     return std::nullopt;
   }
   const std::byte* p = payload.data();
-  return ImuSample{load_le_f64(p), load_le_f64(p + 8), load_le_f64(p + 16),
+  return ImuSample{load_le_f64(p),      load_le_f64(p + 8),  load_le_f64(p + 16),
                    load_le_f64(p + 24), load_le_f64(p + 32), load_le_f64(p + 40)};
 }
 

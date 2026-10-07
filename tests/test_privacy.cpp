@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/privacy.hpp>
 #include <mr/sensor_types.hpp>
@@ -8,8 +8,13 @@
 namespace {
 
 TEST(Privacy, CoarsensGpsInPlace) {
-  mr::GpsFix fix{.latitude_deg = 37.335187, .longitude_deg = -121.881072, .altitude_m = 30.5,
-                 .speed_mps = 12.5F, .heading_deg = 90.0F, .fix_type = 3, .satellites = 10};
+  mr::GpsFix fix{.latitude_deg = 37.335187,
+                 .longitude_deg = -121.881072,
+                 .altitude_m = 30.5,
+                 .speed_mps = 12.5F,
+                 .heading_deg = 90.0F,
+                 .fix_type = 3,
+                 .satellites = 10};
   std::vector<std::byte> buf(mr::GpsFix::kSize);
   mr::encode(fix, buf);
   const mr::PrivacyFilter filter({.gps_decimals = 3, .camera_rois = {}});
@@ -36,8 +41,8 @@ TEST(Privacy, ZeroesCameraRoiAndClampsToImage) {
   std::vector<std::byte> frame(mr::CameraFrameHeader::kSize + kW * kH, std::byte{200});
   mr::encode(mr::CameraFrameHeader{.width = kW, .height = kH, .format = 0, .frame_id = 1}, frame);
   // Second ROI extends past the right/bottom edge and must be clamped.
-  const mr::PrivacyFilter filter({.gps_decimals = std::nullopt,
-                                  .camera_rois = {{2, 1, 3, 2}, {14, 6, 100, 100}}});
+  const mr::PrivacyFilter filter(
+      {.gps_decimals = std::nullopt, .camera_rois = {{2, 1, 3, 2}, {14, 6, 100, 100}}});
   EXPECT_TRUE(filter.apply(mr::SensorKind::kCamera, frame));
   const std::byte* px = frame.data() + mr::CameraFrameHeader::kSize;
   int zeros = 0;

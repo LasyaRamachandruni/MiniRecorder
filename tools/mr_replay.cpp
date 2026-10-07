@@ -34,7 +34,8 @@ class Sink {
 class NullSink final : public Sink {
  public:
   void deliver(const mr::Message& m) override {
-    acc_ += m.payload.size() + (m.payload.empty() ? 0 : std::to_integer<std::uint64_t>(m.payload[0]));
+    acc_ +=
+        m.payload.size() + (m.payload.empty() ? 0 : std::to_integer<std::uint64_t>(m.payload[0]));
   }
   [[nodiscard]] std::uint64_t digest() const override { return acc_; }
 
@@ -52,9 +53,10 @@ class ChecksumSink final : public Sink {
 };
 
 int run(int argc, const char* const* argv) {
-  mr::cli::ArgParser args("mr_replay",
-                          "Replays a log in timestamp order at N x speed and reports how late each\n"
-                          "message was delivered relative to its schedule (p50/p99/max).");
+  mr::cli::ArgParser args(
+      "mr_replay",
+      "Replays a log in timestamp order at N x speed and reports how late each\n"
+      "message was delivered relative to its schedule (p50/p99/max).");
   args.positional("file", "log file (*.mrlog)");
   args.option("speed", "replay speed multiplier (0 = as fast as possible)", "1");
   args.option("streams", "comma separated stream names (default: all sensor streams)", "");
@@ -75,8 +77,9 @@ int run(int argc, const char* const* argv) {
   const auto start_s = args.get_double("start-s");
   const auto duration_s = args.get_double("duration-s");
   const auto spin_us = args.get_int("spin-us");
-  for (const auto* e : {speed ? nullptr : &speed.error(), start_s ? nullptr : &start_s.error(),
-                        duration_s ? nullptr : &duration_s.error(), spin_us ? nullptr : &spin_us.error()}) {
+  for (const auto* e :
+       {speed ? nullptr : &speed.error(), start_s ? nullptr : &start_s.error(),
+        duration_s ? nullptr : &duration_s.error(), spin_us ? nullptr : &spin_us.error()}) {
     if (e != nullptr) {
       std::cerr << "mr_replay: " << e->message << "\n";
       return 2;
@@ -108,7 +111,8 @@ int run(int argc, const char* const* argv) {
       }
     }
   }
-  const std::int64_t t0 = reader->footer().start_time_ns + static_cast<std::int64_t>(*start_s * 1e9);
+  const std::int64_t t0 =
+      reader->footer().start_time_ns + static_cast<std::int64_t>(*start_s * 1e9);
   opts.start_ns = t0;
   if (*duration_s > 0) {
     opts.end_ns = t0 + static_cast<std::int64_t>(*duration_s * 1e9);
@@ -159,7 +163,8 @@ int run(int argc, const char* const* argv) {
         // busy-wait the last stretch for tighter delivery
       }
       sink->deliver(m);
-      lateness.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - deadline).count());
+      lateness.push_back(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - deadline).count());
     } else {
       sink->deliver(m);
     }
@@ -168,21 +173,25 @@ int run(int argc, const char* const* argv) {
   }
   const double elapsed = std::chrono::duration<double>(Clock::now() - run_start).count();
   const auto p = mr::cli::percentiles(lateness);
-  std::cout << std::format("replayed {} messages ({:.2f} MB) in {:.3f} s at speed {}x, sink={} digest={:x}\n",
-                           messages, static_cast<double>(bytes) / 1e6,
-                           elapsed, *speed, args.get("sink"), sink->digest());
+  std::cout << std::format(
+      "replayed {} messages ({:.2f} MB) in {:.3f} s at speed {}x, sink={} digest={:x}\n", messages,
+      static_cast<double>(bytes) / 1e6, elapsed, *speed, args.get("sink"), sink->digest());
   if (*speed > 0) {
     std::cout << std::format(
-        "schedule lateness: p50 {:.1f} us, p90 {:.1f} us, p99 {:.1f} us, p99.9 {:.1f} us, max {:.1f} us\n",
+        "schedule lateness: p50 {:.1f} us, p90 {:.1f} us, p99 {:.1f} us, p99.9 {:.1f} us, max "
+        "{:.1f} us\n",
         p.p50_ns / 1e3, p.p90_ns / 1e3, p.p99_ns / 1e3, p.p999_ns / 1e3, p.max_ns / 1e3);
   } else {
-    std::cout << std::format("throughput: {:.1f} MB/s\n", static_cast<double>(bytes) / 1e6 / elapsed);
+    std::cout << std::format("throughput: {:.1f} MB/s\n",
+                             static_cast<double>(bytes) / 1e6 / elapsed);
   }
   if (!args.get("json").empty()) {
     std::ofstream out(args.get("json"));
     out << std::format(
-        "{{\"file\": \"{}\", \"speed\": {}, \"spin_us\": {}, \"messages\": {}, \"bytes\": {}, \"elapsed_s\": {:.6f}, "
-        "\"lateness_us\": {{\"p50\": {:.2f}, \"p90\": {:.2f}, \"p99\": {:.2f}, \"p999\": {:.2f}, \"max\": {:.2f}}}}}\n",
+        "{{\"file\": \"{}\", \"speed\": {}, \"spin_us\": {}, \"messages\": {}, \"bytes\": {}, "
+        "\"elapsed_s\": {:.6f}, "
+        "\"lateness_us\": {{\"p50\": {:.2f}, \"p90\": {:.2f}, \"p99\": {:.2f}, \"p999\": {:.2f}, "
+        "\"max\": {:.2f}}}}}\n",
         path.string(), *speed, *spin_us, messages, bytes, elapsed, p.p50_ns / 1e3, p.p90_ns / 1e3,
         p.p99_ns / 1e3, p.p999_ns / 1e3, p.max_ns / 1e3);
   }

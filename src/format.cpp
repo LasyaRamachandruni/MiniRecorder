@@ -1,17 +1,20 @@
-#include <mr/format.hpp>
-
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <string>
 
 #include <mr/crc32c.hpp>
+#include <mr/format.hpp>
 
 namespace mr::format {
 namespace {
 
-Error corrupt(std::string what) { return make_error(Errc::kCorrupt, std::move(what)); }
-Error truncated(std::string what) { return make_error(Errc::kTruncated, std::move(what)); }
+Error corrupt(std::string what) {
+  return make_error(Errc::kCorrupt, std::move(what));
+}
+Error truncated(std::string what) {
+  return make_error(Errc::kTruncated, std::move(what));
+}
 
 bool magic_equals(ByteSpan data, const std::array<std::byte, 8>& magic) {
   return data.size() >= magic.size() && std::equal(magic.begin(), magic.end(), data.begin());
@@ -36,8 +39,8 @@ std::vector<std::byte> encode_file_header(const FileHeader& header) {
   w.put_bytes(kFileMagic);
   w.put<std::uint16_t>(kVersion);
   w.put<std::uint16_t>(static_cast<std::uint16_t>(header.streams.size()));
-  w.put<std::uint32_t>(
-      static_cast<std::uint32_t>(kFileHeaderFixedSize + header.streams.size() * kStreamEntrySize + 4));
+  w.put<std::uint32_t>(static_cast<std::uint32_t>(kFileHeaderFixedSize +
+                                                  header.streams.size() * kStreamEntrySize + 4));
   w.put<std::int64_t>(header.created_unix_ns);
   w.put<std::uint32_t>(header.flags);
   w.put<std::uint32_t>(0);  // reserved

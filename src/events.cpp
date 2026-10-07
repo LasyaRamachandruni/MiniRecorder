@@ -1,6 +1,6 @@
-#include <mr/events.hpp>
-
 #include <format>
+
+#include <mr/events.hpp>
 
 namespace mr {
 

@@ -27,7 +27,7 @@
 namespace mr::format {
 
 inline constexpr std::array<std::byte, 8> kFileMagic{
-    std::byte{'M'}, std::byte{'R'}, std::byte{'L'},  std::byte{'O'},
+    std::byte{'M'}, std::byte{'R'},  std::byte{'L'},  std::byte{'O'},
     std::byte{'G'}, std::byte{'\r'}, std::byte{'\n'}, std::byte{0x1A}};
 inline constexpr std::array<std::byte, 8> kTrailerMagic{
     std::byte{'M'}, std::byte{'R'}, std::byte{'L'}, std::byte{'O'},
@@ -39,7 +39,7 @@ inline constexpr std::size_t kFileHeaderFixedSize = 32;
 inline constexpr std::size_t kStreamEntrySize = 48;
 inline constexpr std::size_t kStreamNameMax = 40;
 
-inline constexpr std::uint32_t kChunkMagic = 0x4B43524DU;   // "MRCK" little-endian
+inline constexpr std::uint32_t kChunkMagic = 0x4B43524DU;  // "MRCK" little-endian
 inline constexpr std::size_t kChunkHeaderSize = 64;
 inline constexpr std::uint32_t kFooterMagic = 0x5446524DU;  // "MRFT" little-endian
 inline constexpr std::size_t kFooterFixedSize = 32;
@@ -168,7 +168,8 @@ struct Trailer {
 
 // Encodes footer followed by trailer; `footer_offset` is the file offset at
 // which the returned bytes will be written.
-[[nodiscard]] std::vector<std::byte> encode_footer(const Footer& footer, std::uint64_t footer_offset);
+[[nodiscard]] std::vector<std::byte> encode_footer(const Footer& footer,
+                                                   std::uint64_t footer_offset);
 [[nodiscard]] Result<Trailer> decode_trailer(ByteSpan last_bytes);
 [[nodiscard]] Result<Footer> decode_footer(ByteSpan footer_bytes, const Trailer& trailer);
 // Convenience: locate and decode footer from a complete file image.

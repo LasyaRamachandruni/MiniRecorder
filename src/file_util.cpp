@@ -1,14 +1,13 @@
-#include <mr/file_util.hpp>
-
+#include <cerrno>
+#include <cstdio>
 #include <fcntl.h>
+#include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include <cerrno>
-#include <cstdio>
-#include <string>
 #include <utility>
+
+#include <mr/file_util.hpp>
 
 namespace mr {
 
@@ -42,7 +41,8 @@ Status FileDescriptor::close() {
 
 Result<FileDescriptor> open_file(const std::filesystem::path& path, int flags, unsigned mode) {
   // open(2) is variadic by POSIX definition.
-  const int fd = ::open(path.c_str(), flags | O_CLOEXEC, static_cast<mode_t>(mode));  // NOLINT(cppcoreguidelines-pro-type-vararg)
+  const int fd = ::open(path.c_str(), flags | O_CLOEXEC,
+                        static_cast<mode_t>(mode));  // NOLINT(cppcoreguidelines-pro-type-vararg)
   if (fd < 0) {
     return io_error("open " + path.string(), errno);
   }
@@ -171,12 +171,15 @@ MappedFile& MappedFile::operator=(MappedFile&& other) noexcept {
   return *this;
 }
 
-MappedFile::~MappedFile() { unmap(); }
+MappedFile::~MappedFile() {
+  unmap();
+}
 
 void MappedFile::unmap() noexcept {
   if (data_ != nullptr) {
     // munmap takes a non-const pointer; the mapping itself is read-only.
-    ::munmap(const_cast<std::byte*>(data_), size_);  // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    ::munmap(const_cast<std::byte*>(data_),
+             size_);  // NOLINT(cppcoreguidelines-pro-type-const-cast)
     data_ = nullptr;
     size_ = 0;
   }

@@ -1,10 +1,10 @@
-#include <gtest/gtest.h>
-
 #include <filesystem>
 #include <fstream>
 #include <random>
 #include <set>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/events.hpp>
 #include <mr/file_util.hpp>
@@ -26,7 +26,8 @@ std::vector<std::byte> read_file(const std::filesystem::path& p) {
 
 void write_file(const std::filesystem::path& p, mr::ByteSpan bytes) {
   std::ofstream out(p, std::ios::binary | std::ios::trunc);
-  out.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));  // NOLINT
+  out.write(reinterpret_cast<const char*>(bytes.data()),
+            static_cast<std::streamsize>(bytes.size()));  // NOLINT
 }
 
 std::uint64_t count_records(const mr::Reader& r) {
@@ -87,7 +88,8 @@ class RecoveryTest : public ::testing::Test {
     EXPECT_FALSE(std::filesystem::exists(partial));
     auto reader = mr::Reader::open(out);
     ASSERT_TRUE(reader) << "cut " << cut << ": " << reader.error().describe();
-    EXPECT_EQ(reader->footer().flags & fmt::footer_flags::kRecovered, fmt::footer_flags::kRecovered);
+    EXPECT_EQ(reader->footer().flags & fmt::footer_flags::kRecovered,
+              fmt::footer_flags::kRecovered);
     EXPECT_EQ(count_records(*reader), records) << "cut " << cut;
   }
 
@@ -163,8 +165,9 @@ TEST_F(RecoveryTest, GarbageTailIsDiscarded) {
 TEST_F(RecoveryTest, ReplayedChunkWithWrongSequenceIsRejected) {
   // Append a copy of chunk 0 at the end: valid CRCs but sequence number 0.
   const auto& c0 = index_.front();
-  std::vector<std::byte> copy(data_.begin() + static_cast<std::ptrdiff_t>(c0.offset),
-                              data_.begin() + static_cast<std::ptrdiff_t>(c0.offset + c0.total_size));
+  std::vector<std::byte> copy(
+      data_.begin() + static_cast<std::ptrdiff_t>(c0.offset),
+      data_.begin() + static_cast<std::ptrdiff_t>(c0.offset + c0.total_size));
   data_.insert(data_.end(), copy.begin(), copy.end());
   const auto partial = dir_.file("s.mrlog.partial");
   write_file(partial, data_);
@@ -177,7 +180,8 @@ TEST_F(RecoveryTest, ReplayedChunkWithWrongSequenceIsRejected) {
 TEST_F(RecoveryTest, DryRunDoesNotModifyInput) {
   const auto partial = dir_.file("d.mrlog.partial");
   write_file(partial, mr::ByteSpan(data_).first(data_.size() - 10));
-  auto report = mr::recover_file(partial, dir_.file("d.mrlog"), {.verify_records = true, .dry_run = true});
+  auto report =
+      mr::recover_file(partial, dir_.file("d.mrlog"), {.verify_records = true, .dry_run = true});
   ASSERT_TRUE(report);
   EXPECT_EQ(report->chunks_recovered, index_.size() - 1);
   EXPECT_EQ(read_file(partial).size(), data_.size() - 10);
@@ -213,8 +217,10 @@ TEST(Recovery, QualityCountersAreRebuiltFromEventStream) {
     mr::WriterOptions opts;
     opts.path = path;
     opts.streams = mr::test::test_streams(2);
-    opts.streams.push_back({.id = mr::kEventStreamId, .kind = mr::SensorKind::kEvents,
-                            .nominal_rate_hz = 0.0, .name = "_events"});
+    opts.streams.push_back({.id = mr::kEventStreamId,
+                            .kind = mr::SensorKind::kEvents,
+                            .nominal_rate_hz = 0.0,
+                            .name = "_events"});
     opts.chunk_target_bytes = 1;  // every record seals its own chunk, so all reach the disk
     auto w = mr::StorageWriter::open(opts);
     ASSERT_TRUE(w);
@@ -229,7 +235,8 @@ TEST(Recovery, QualityCountersAreRebuiltFromEventStream) {
     for (const auto& e : events) {
       std::array<std::byte, mr::kEventPayloadSize> buf{};
       mr::encode_event(e, buf);
-      ASSERT_TRUE((*w)->append({.timestamp_ns = e.timestamp_ns, .seq = seq++, .stream_id = mr::kEventStreamId}, buf, 0));
+      ASSERT_TRUE((*w)->append(
+          {.timestamp_ns = e.timestamp_ns, .seq = seq++, .stream_id = mr::kEventStreamId}, buf, 0));
     }
     // Destroyed without close(): crash. Sealed chunks are still written.
   }

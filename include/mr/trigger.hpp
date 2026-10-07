@@ -24,14 +24,14 @@
 namespace mr {
 
 struct TriggerConfig {
-  double hard_brake_mps2 = 5.0;                  // deceleration threshold
-  std::chrono::milliseconds wheel_window{100};   // speed derivative baseline
-  double imu_smoothing = 0.2;                    // EMA factor for longitudinal accel
-  bool on_quality_fault = false;                 // seq gaps / regressions / stale trigger too
-  std::chrono::milliseconds refractory{2000};    // minimum spacing between triggers
+  double hard_brake_mps2 = 5.0;                 // deceleration threshold
+  std::chrono::milliseconds wheel_window{100};  // speed derivative baseline
+  double imu_smoothing = 0.2;                   // EMA factor for longitudinal accel
+  bool on_quality_fault = false;                // seq gaps / regressions / stale trigger too
+  std::chrono::milliseconds refractory{2000};   // minimum spacing between triggers
   std::chrono::milliseconds pre_window{3000};
   std::chrono::milliseconds post_window{2000};
-  std::size_t max_buffer_bytes = 64U << 20;      // cap for the pre-trigger buffer
+  std::size_t max_buffer_bytes = 64U << 20;  // cap for the pre-trigger buffer
 };
 
 class TriggerDetector {

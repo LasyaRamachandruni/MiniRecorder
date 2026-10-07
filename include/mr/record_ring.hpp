@@ -115,7 +115,9 @@ class OwnedCounter {
   void add(std::uint64_t n = 1) noexcept {
     value_.store(value_.load(std::memory_order_relaxed) + n, std::memory_order_relaxed);
   }
-  [[nodiscard]] std::uint64_t get() const noexcept { return value_.load(std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t get() const noexcept {
+    return value_.load(std::memory_order_relaxed);
+  }
 
  private:
   std::atomic<std::uint64_t> value_{0};

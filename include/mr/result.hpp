@@ -81,7 +81,7 @@ class [[nodiscard]] Result {
   // Implicit by design so that `return value;` and `return make_error(...);`
   // both work, mirroring std::expected.
   Result(T value) : value_(std::in_place_index<1>, std::move(value)) {}  // NOLINT
-  Result(Error error) : error_(std::move(error)) {}                     // NOLINT
+  Result(Error error) : error_(std::move(error)) {}                      // NOLINT
 
   [[nodiscard]] bool ok() const noexcept { return value_.index() == 1; }
   explicit operator bool() const noexcept { return ok(); }
@@ -143,17 +143,19 @@ class [[nodiscard]] Result<void> {
 
 using Status = Result<void>;
 
-[[nodiscard]] inline Status ok_status() { return {}; }
+[[nodiscard]] inline Status ok_status() {
+  return {};
+}
 
 }  // namespace mr
 
 // Propagates the error of a Status/Result expression to the caller. A macro
 // because it has to `return` from the calling function.
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)
-#define MR_RETURN_IF_ERROR(expr)              \
-  do {                                        \
+#define MR_RETURN_IF_ERROR(expr)                 \
+  do {                                           \
     if (auto mr_status_ = (expr); !mr_status_) { \
-      return std::move(mr_status_).error();   \
-    }                                         \
+      return std::move(mr_status_).error();      \
+    }                                            \
   } while (false)
 // NOLINTEND(cppcoreguidelines-macro-usage)

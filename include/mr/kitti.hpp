@@ -55,7 +55,9 @@ class KittiOxtsReplay {
                   RecordRing& gps_ring);
 
   void run(const std::stop_token& stop, std::chrono::steady_clock::time_point start);
-  [[nodiscard]] std::uint64_t emitted() const noexcept { return emitted_.load(std::memory_order_relaxed); }
+  [[nodiscard]] std::uint64_t emitted() const noexcept {
+    return emitted_.load(std::memory_order_relaxed);
+  }
 
  private:
   KittiReplayConfig config_;

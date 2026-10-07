@@ -26,8 +26,8 @@ void fix_chunk_crcs(std::vector<std::byte>& buf) {
   }
   const auto compressed = mr::load_le<std::uint32_t>(buf.data() + 44);
   const std::size_t body = std::min<std::size_t>(compressed, buf.size() - fmt::kChunkHeaderSize);
-  mr::store_le<std::uint32_t>(buf.data() + 56,
-                              mr::crc32c::value(mr::ByteSpan(buf).subspan(fmt::kChunkHeaderSize, body)));
+  mr::store_le<std::uint32_t>(
+      buf.data() + 56, mr::crc32c::value(mr::ByteSpan(buf).subspan(fmt::kChunkHeaderSize, body)));
   mr::store_le<std::uint32_t>(buf.data() + 60, mr::crc32c::value(mr::ByteSpan(buf).first(60)));
 }
 

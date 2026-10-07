@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
 #include <cmath>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 #include <mr/reader.hpp>
 #include <mr/recorder.hpp>

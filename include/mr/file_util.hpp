@@ -45,7 +45,8 @@ class FileDescriptor {
 [[nodiscard]] Status truncate_file(int fd, std::uint64_t size);
 [[nodiscard]] Result<std::uint64_t> file_size(int fd);
 // rename(2) followed by fsync of the parent directory so the new name is durable.
-[[nodiscard]] Status durable_rename(const std::filesystem::path& from, const std::filesystem::path& to);
+[[nodiscard]] Status durable_rename(const std::filesystem::path& from,
+                                    const std::filesystem::path& to);
 
 // Read-only memory mapping of a whole file.
 class MappedFile {

@@ -16,7 +16,8 @@
 
 namespace mr::crc32c {
 
-[[nodiscard]] std::uint32_t extend_portable(std::uint32_t crc, std::span<const std::byte> data) noexcept;
+[[nodiscard]] std::uint32_t extend_portable(std::uint32_t crc,
+                                            std::span<const std::byte> data) noexcept;
 [[nodiscard]] std::uint32_t extend_hw(std::uint32_t crc, std::span<const std::byte> data) noexcept;
 [[nodiscard]] bool hw_available() noexcept;
 

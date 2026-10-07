@@ -1,7 +1,7 @@
-#include <mr/record.hpp>
-
 #include <array>
 #include <utility>
+
+#include <mr/record.hpp>
 
 namespace mr {
 namespace {

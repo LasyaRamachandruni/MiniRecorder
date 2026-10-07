@@ -23,14 +23,14 @@
 namespace mr {
 
 struct VehicleProfile {
-  double cycle_s = 30.0;          // driving pattern repeats with this period
-  double brake_start_s = 20.0;    // hard brake begins at this offset within a cycle
+  double cycle_s = 30.0;        // driving pattern repeats with this period
+  double brake_start_s = 20.0;  // hard brake begins at this offset within a cycle
   double brake_decel_mps2 = 7.0;
   double brake_duration_s = 2.0;
   double cruise_mps = 15.0;
   double recover_accel_mps2 = 2.0;
   double track_radius_m = 400.0;
-  double origin_lat_deg = 37.3352;   // San Jose, CA
+  double origin_lat_deg = 37.3352;  // San Jose, CA
   double origin_lon_deg = -121.8811;
 };
 
@@ -59,9 +59,12 @@ class SignalGenerator {
   virtual void generate(double t_s, std::uint64_t seq, MutableByteSpan out) = 0;
 };
 
-[[nodiscard]] std::unique_ptr<SignalGenerator> make_imu_generator(const VehicleProfile& p, std::uint64_t seed);
-[[nodiscard]] std::unique_ptr<SignalGenerator> make_gps_generator(const VehicleProfile& p, std::uint64_t seed);
-[[nodiscard]] std::unique_ptr<SignalGenerator> make_wheel_generator(const VehicleProfile& p, std::uint64_t seed);
+[[nodiscard]] std::unique_ptr<SignalGenerator> make_imu_generator(const VehicleProfile& p,
+                                                                  std::uint64_t seed);
+[[nodiscard]] std::unique_ptr<SignalGenerator> make_gps_generator(const VehicleProfile& p,
+                                                                  std::uint64_t seed);
+[[nodiscard]] std::unique_ptr<SignalGenerator> make_wheel_generator(const VehicleProfile& p,
+                                                                    std::uint64_t seed);
 // Grayscale frames: a smooth multi-octave value-noise texture panned with the
 // vehicle's motion plus small per-pixel sensor noise (0, +-1, +-2 levels). This is
 // meant to compress roughly like a real raw image (neither random bytes nor
@@ -108,7 +111,8 @@ struct SensorCounters {
 // enqueue_ns is the real steady-clock push time used for latency metrics.
 class SensorProducer {
  public:
-  SensorProducer(const SensorConfig& config, std::unique_ptr<SignalGenerator> generator, RecordRing& ring);
+  SensorProducer(const SensorConfig& config, std::unique_ptr<SignalGenerator> generator,
+                 RecordRing& ring);
 
   void run(const std::stop_token& stop, std::chrono::steady_clock::time_point start);
   [[nodiscard]] SensorCounters counters() const noexcept;

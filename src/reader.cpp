@@ -1,8 +1,8 @@
-#include <mr/reader.hpp>
-
 #include <algorithm>
 #include <bit>
 #include <string>
+
+#include <mr/reader.hpp>
 
 namespace mr {
 
@@ -37,7 +37,8 @@ Result<Reader> Reader::open(const std::filesystem::path& path) {
   for (std::size_t i = 0; i < reader.footer_.chunks.size(); ++i) {
     const format::ChunkIndexEntry& c = reader.footer_.chunks[i];
     if (c.offset < min_offset) {
-      return make_error(Errc::kCorrupt, "chunk index not in file order at entry " + std::to_string(i));
+      return make_error(Errc::kCorrupt,
+                        "chunk index not in file order at entry " + std::to_string(i));
     }
     min_offset = c.offset + c.total_size;
     for (std::uint64_t mask = c.stream_mask; mask != 0; mask &= mask - 1) {
@@ -92,7 +93,8 @@ Status Reader::read_chunk(std::size_t chunk_index, ZstdDecompressor& decompresso
   if (header->total_size() != entry.total_size || header->stream_mask != entry.stream_mask) {
     return make_error(Errc::kCorrupt, "chunk header disagrees with footer index");
   }
-  return decode_chunk_body(header.value(), chunk.subspan(format::kChunkHeaderSize), decompressor, out);
+  return decode_chunk_body(header.value(), chunk.subspan(format::kChunkHeaderSize), decompressor,
+                           out);
 }
 
 MessageIterator Reader::messages(const ReadOptions& options) const {
@@ -159,7 +161,8 @@ bool MessageIterator::later(std::size_t a, std::size_t b) const noexcept {
 
 void MessageIterator::push_heap_entry(std::size_t cursor_index) {
   heap_.push_back(cursor_index);
-  std::push_heap(heap_.begin(), heap_.end(), [this](std::size_t a, std::size_t b) { return later(a, b); });
+  std::push_heap(heap_.begin(), heap_.end(),
+                 [this](std::size_t a, std::size_t b) { return later(a, b); });
 }
 
 Status MessageIterator::prime() {
@@ -196,7 +199,8 @@ Result<bool> MessageIterator::next(Message& out) {
   if (heap_.empty()) {
     return false;
   }
-  std::pop_heap(heap_.begin(), heap_.end(), [this](std::size_t a, std::size_t b) { return later(a, b); });
+  std::pop_heap(heap_.begin(), heap_.end(),
+                [this](std::size_t a, std::size_t b) { return later(a, b); });
   const std::size_t i = heap_.back();
   heap_.pop_back();
   out.meta = cursors_[i].current.meta;

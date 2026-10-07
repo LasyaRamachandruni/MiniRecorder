@@ -1,8 +1,7 @@
-#include <mr/trigger.hpp>
-
 #include <algorithm>
 
 #include <mr/sensor_types.hpp>
+#include <mr/trigger.hpp>
 
 namespace mr {
 

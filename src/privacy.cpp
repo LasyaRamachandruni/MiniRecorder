@@ -1,11 +1,10 @@
-#include <mr/privacy.hpp>
-
 #include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstring>
 #include <string>
 
+#include <mr/privacy.hpp>
 #include <mr/sensor_types.hpp>
 
 namespace mr {
@@ -30,7 +29,8 @@ Result<Roi> parse_roi(std::string_view text) {
     }
   }
   if (i != v.size() || p != end) {
-    return make_error(Errc::kInvalidArgument, "ROI must be 'x,y,w,h', got '" + std::string(text) + "'");
+    return make_error(Errc::kInvalidArgument,
+                      "ROI must be 'x,y,w,h', got '" + std::string(text) + "'");
   }
   return Roi{v[0], v[1], v[2], v[3]};
 }
@@ -49,8 +49,10 @@ double PrivacyFilter::coarsen(double degrees, int decimals) noexcept {
 bool PrivacyFilter::apply(SensorKind kind, MutableByteSpan payload) const noexcept {
   if (kind == SensorKind::kGps && config_.gps_decimals && payload.size() == GpsFix::kSize) {
     std::byte* p = payload.data();
-    store_le_f64(p + kGpsLatitudeOffset, coarsen(load_le_f64(p + kGpsLatitudeOffset), *config_.gps_decimals));
-    store_le_f64(p + kGpsLongitudeOffset, coarsen(load_le_f64(p + kGpsLongitudeOffset), *config_.gps_decimals));
+    store_le_f64(p + kGpsLatitudeOffset,
+                 coarsen(load_le_f64(p + kGpsLatitudeOffset), *config_.gps_decimals));
+    store_le_f64(p + kGpsLongitudeOffset,
+                 coarsen(load_le_f64(p + kGpsLongitudeOffset), *config_.gps_decimals));
     return true;
   }
   if (kind == SensorKind::kCamera && !config_.camera_rois.empty()) {

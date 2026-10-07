@@ -1,17 +1,20 @@
-#include <mr/chunk.hpp>
-
-#include <zstd.h>
-
 #include <cstring>
 #include <new>
 #include <string>
 
+#include <zstd.h>
+
+#include <mr/chunk.hpp>
 #include <mr/crc32c.hpp>
 
 namespace mr {
 
-void ZstdCompressor::Deleter::operator()(ZSTD_CCtx_s* ctx) const noexcept { ZSTD_freeCCtx(ctx); }
-void ZstdDecompressor::Deleter::operator()(ZSTD_DCtx_s* ctx) const noexcept { ZSTD_freeDCtx(ctx); }
+void ZstdCompressor::Deleter::operator()(ZSTD_CCtx_s* ctx) const noexcept {
+  ZSTD_freeCCtx(ctx);
+}
+void ZstdDecompressor::Deleter::operator()(ZSTD_DCtx_s* ctx) const noexcept {
+  ZSTD_freeDCtx(ctx);
+}
 
 ZstdCompressor::ZstdCompressor(int level) : level_(level) {
   if (level_ > 0) {
@@ -45,7 +48,8 @@ ZstdDecompressor::ZstdDecompressor() : ctx_(ZSTD_createDCtx()) {
 Status ZstdDecompressor::decompress(ByteSpan in, std::size_t expected_size,
                                     std::vector<std::byte>& out) {
   out.resize(expected_size);
-  const std::size_t n = ZSTD_decompressDCtx(ctx_.get(), out.data(), out.size(), in.data(), in.size());
+  const std::size_t n =
+      ZSTD_decompressDCtx(ctx_.get(), out.data(), out.size(), in.data(), in.size());
   if (ZSTD_isError(n) != 0U) {
     return make_error(Errc::kCorrupt, std::string("zstd: ") + ZSTD_getErrorName(n));
   }
@@ -56,7 +60,8 @@ Status ZstdDecompressor::decompress(ByteSpan in, std::size_t expected_size,
 }
 
 Result<format::ChunkHeader> encode_chunk(const format::ChunkHeader& meta, ByteSpan records,
-                                         ZstdCompressor& compressor, std::vector<std::byte>& scratch,
+                                         ZstdCompressor& compressor,
+                                         std::vector<std::byte>& scratch,
                                          std::vector<std::byte>& out) {
   if (records.size() > format::kMaxChunkBytes) {
     return make_error(Errc::kInvalidArgument, "chunk body exceeds kMaxChunkBytes");
@@ -77,8 +82,8 @@ Result<format::ChunkHeader> encode_chunk(const format::ChunkHeader& meta, ByteSp
   header.payload_crc = crc32c::value(body);
 
   out.resize(format::kChunkHeaderSize + body.size());
-  format::encode_chunk_header(header, std::span<std::byte, format::kChunkHeaderSize>(
-                                          out.data(), format::kChunkHeaderSize));
+  format::encode_chunk_header(
+      header, std::span<std::byte, format::kChunkHeaderSize>(out.data(), format::kChunkHeaderSize));
   if (!body.empty()) {
     std::memcpy(out.data() + format::kChunkHeaderSize, body.data(), body.size());
   }
@@ -113,8 +118,8 @@ Result<format::ChunkHeader> parse_and_verify_chunk(ByteSpan data, ZstdDecompress
   if (data.size() - format::kChunkHeaderSize < h.compressed_size) {
     return make_error(Errc::kTruncated, "chunk body truncated");
   }
-  MR_RETURN_IF_ERROR(decode_chunk_body(
-      h, data.subspan(format::kChunkHeaderSize, h.compressed_size), decompressor, out));
+  MR_RETURN_IF_ERROR(decode_chunk_body(h, data.subspan(format::kChunkHeaderSize, h.compressed_size),
+                                       decompressor, out));
 
   format::RecordParser parser(out);
   format::RecordView rec;

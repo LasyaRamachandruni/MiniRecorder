@@ -1,10 +1,10 @@
-#include <gtest/gtest.h>
-
 #include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <thread>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/record_ring.hpp>
 
@@ -40,7 +40,8 @@ bool payload_matches(std::uint64_t seq, ByteSpan in) noexcept {
 }
 
 PushResult push_seq(RecordRing& ring, std::uint64_t seq) {
-  RecordMeta meta{.timestamp_ns = static_cast<std::int64_t>(seq) * 1000, .seq = seq, .stream_id = 3};
+  RecordMeta meta{
+      .timestamp_ns = static_cast<std::int64_t>(seq) * 1000, .seq = seq, .stream_id = 3};
   return ring.push_with(meta, 0, payload_size_for(seq, ring.max_payload()),
                         [seq](MutableByteSpan out) noexcept { fill_payload(seq, out); });
 }
@@ -83,7 +84,8 @@ TEST(RecordRing, DropNewestKeepsOldest) {
   EXPECT_EQ(ring.counters().dropped_newest, 2U);
 
   std::vector<std::uint64_t> seqs;
-  while (ring.try_pop([&](const RingHeader& h, ByteSpan) noexcept { seqs.push_back(h.meta.seq); })) {
+  while (
+      ring.try_pop([&](const RingHeader& h, ByteSpan) noexcept { seqs.push_back(h.meta.seq); })) {
   }
   EXPECT_EQ(seqs, (std::vector<std::uint64_t>{0, 1, 2, 3}));
 }

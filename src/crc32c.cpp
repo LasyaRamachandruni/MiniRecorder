@@ -1,8 +1,7 @@
-#include <mr/crc32c.hpp>
-
 #include <array>
 
 #include <mr/bytes.hpp>
+#include <mr/crc32c.hpp>
 
 #if defined(__x86_64__)
 #include <nmmintrin.h>
@@ -80,7 +79,8 @@ __attribute__((target("sse4.2"))) std::uint32_t extend_hw(
 }
 
 bool hw_available() noexcept {
-  static const bool available = __builtin_cpu_supports("sse4.2") != 0;  // NOLINT(readability-implicit-bool-conversion)
+  static const bool available =
+      __builtin_cpu_supports("sse4.2") != 0;  // NOLINT(readability-implicit-bool-conversion)
   return available;
 }
 
@@ -90,7 +90,9 @@ std::uint32_t extend_hw(std::uint32_t crc, std::span<const std::byte> data) noex
   return extend_portable(crc, data);
 }
 
-bool hw_available() noexcept { return false; }
+bool hw_available() noexcept {
+  return false;
+}
 
 #endif
 

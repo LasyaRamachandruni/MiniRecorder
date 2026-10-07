@@ -1,5 +1,3 @@
-#include <mr/kitti.hpp>
-
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -9,6 +7,8 @@
 #include <numbers>
 #include <string>
 #include <thread>
+
+#include <mr/kitti.hpp>
 
 namespace mr {
 namespace {
@@ -21,9 +21,19 @@ std::int64_t to_ns(Clock::time_point t) noexcept {
 
 // OXTS field indices (see KITTI devkit readme, dataformat.txt).
 enum OxtsField : std::size_t {
-  kLat = 0, kLon = 1, kAlt = 2, kYaw = 5, kVf = 8,
-  kAf = 14, kAl = 15, kAu = 16, kWf = 20, kWl = 21, kWu = 22,
-  kNumSats = 26, kFieldCount = 30,
+  kLat = 0,
+  kLon = 1,
+  kAlt = 2,
+  kYaw = 5,
+  kVf = 8,
+  kAf = 14,
+  kAl = 15,
+  kAu = 16,
+  kWf = 20,
+  kWl = 21,
+  kWu = 22,
+  kNumSats = 26,
+  kFieldCount = 30,
 };
 
 template <typename T>
@@ -53,7 +63,8 @@ Result<OxtsSample> parse_oxts_line(std::string_view line) {
     pos = end;
   }
   if (n != kFieldCount) {
-    return make_error(Errc::kInvalidArgument, std::format("OXTS line has {} fields, expected 30", n));
+    return make_error(Errc::kInvalidArgument,
+                      std::format("OXTS line has {} fields, expected 30", n));
   }
   OxtsSample s;
   s.gps.latitude_deg = v[kLat];
@@ -144,7 +155,8 @@ void KittiOxtsReplay::run(const std::stop_token& stop, Clock::time_point start) 
   const std::int64_t start_ns = to_ns(start);
   // Duration of one pass plus one nominal sample period, so looped passes do
   // not repeat a timestamp.
-  const std::int64_t period = samples_.size() > 1 ? samples_[1].timestamp_ns - samples_[0].timestamp_ns : 100'000'000;
+  const std::int64_t period =
+      samples_.size() > 1 ? samples_[1].timestamp_ns - samples_[0].timestamp_ns : 100'000'000;
   const std::int64_t pass_ns = samples_.back().timestamp_ns + std::max<std::int64_t>(period, 1);
   const double scale = std::max(config_.rate_scale, 1e-3);
   std::uint64_t seq = 0;
@@ -158,17 +170,18 @@ void KittiOxtsReplay::run(const std::stop_token& stop, Clock::time_point start) 
         const auto deadline = start + std::chrono::nanoseconds(static_cast<std::int64_t>(
                                           static_cast<double>(virtual_ns) / scale));
         while (!stop.stop_requested() && Clock::now() < deadline) {
-          std::this_thread::sleep_until(std::min(deadline, Clock::now() + std::chrono::milliseconds(20)));
+          std::this_thread::sleep_until(
+              std::min(deadline, Clock::now() + std::chrono::milliseconds(20)));
         }
       }
       const std::int64_t ts = start_ns + virtual_ns;
       const std::int64_t now = to_ns(Clock::now());
-      const auto r1 = imu_ring_->push_with({.timestamp_ns = ts, .seq = seq, .stream_id = config_.imu_stream},
-                                           now, ImuSample::kSize,
-                                           [&s](MutableByteSpan out) { encode(s.imu, out); });
-      const auto r2 = gps_ring_->push_with({.timestamp_ns = ts, .seq = seq, .stream_id = config_.gps_stream},
-                                           now, GpsFix::kSize,
-                                           [&s](MutableByteSpan out) { encode(s.gps, out); });
+      const auto r1 = imu_ring_->push_with(
+          {.timestamp_ns = ts, .seq = seq, .stream_id = config_.imu_stream}, now, ImuSample::kSize,
+          [&s](MutableByteSpan out) { encode(s.imu, out); });
+      const auto r2 = gps_ring_->push_with(
+          {.timestamp_ns = ts, .seq = seq, .stream_id = config_.gps_stream}, now, GpsFix::kSize,
+          [&s](MutableByteSpan out) { encode(s.gps, out); });
       if (r1 == PushResult::kStopped || r2 == PushResult::kStopped) {
         return;
       }

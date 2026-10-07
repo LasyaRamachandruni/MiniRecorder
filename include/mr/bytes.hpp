@@ -28,7 +28,8 @@ template <LeInteger T>
   using U = std::make_unsigned_t<T>;
   U value = 0;
   for (std::size_t i = 0; i < sizeof(T); ++i) {
-    value = static_cast<U>(value | (static_cast<U>(std::to_integer<std::uint8_t>(src[i])) << (8 * i)));
+    value =
+        static_cast<U>(value | (static_cast<U>(std::to_integer<std::uint8_t>(src[i])) << (8 * i)));
   }
   return static_cast<T>(value);
 }

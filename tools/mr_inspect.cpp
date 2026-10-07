@@ -18,10 +18,13 @@ std::string stream_name(const mr::Reader& r, mr::StreamId id) {
   return info != nullptr ? info->name : std::format("#{}", id);
 }
 
-double mb(std::uint64_t bytes) { return static_cast<double>(bytes) / 1e6; }
+double mb(std::uint64_t bytes) {
+  return static_cast<double>(bytes) / 1e6;
+}
 
 std::string format_utc(std::int64_t unix_ns) {
-  const auto tp = std::chrono::sys_time<std::chrono::nanoseconds>(std::chrono::nanoseconds(unix_ns));
+  const auto tp =
+      std::chrono::sys_time<std::chrono::nanoseconds>(std::chrono::nanoseconds(unix_ns));
   return std::format("{:%Y-%m-%d %H:%M:%S} UTC", std::chrono::floor<std::chrono::seconds>(tp));
 }
 
@@ -42,27 +45,34 @@ void print_summary(const mr::Reader& r, const std::filesystem::path& path) {
       "time span   {:.3f} s\n"
       "chunks      {} ({} records)\n"
       "data        {:.2f} MB stored, {:.2f} MB uncompressed, ratio {:.2f}\n\n",
-      path.string(), mb(r.file_bytes().size()), mr::format::kVersion, format_utc(r.header().created_unix_ns),
-      (f.flags & mr::format::footer_flags::kRecovered) != 0 ? ", RECOVERED after crash" : "", span_s,
-      f.chunks.size(), records, mb(stored), mb(uncompressed),
+      path.string(), mb(r.file_bytes().size()), mr::format::kVersion,
+      format_utc(r.header().created_unix_ns),
+      (f.flags & mr::format::footer_flags::kRecovered) != 0 ? ", RECOVERED after crash" : "",
+      span_s, f.chunks.size(), records, mb(stored), mb(uncompressed),
       stored > 0 ? static_cast<double>(uncompressed) / static_cast<double>(stored) : 0.0);
 
-  std::cout << std::format("{:>3} {:<14} {:<10} {:>8} {:>9} {:>9} {:>10} {:>9} {:>6} {:>8} {:>5} {:>7} {:>5} {:>5}\n",
-                           "id", "stream", "kind", "nominal", "measured", "records", "payloadMB", "storedMB",
-                           "ratio", "dropped", "gaps", "regress", "rate", "stale");
+  std::cout << std::format(
+      "{:>3} {:<14} {:<10} {:>8} {:>9} {:>9} {:>10} {:>9} {:>6} {:>8} {:>5} {:>7} {:>5} {:>5}\n",
+      "id", "stream", "kind", "nominal", "measured", "records", "payloadMB", "storedMB", "ratio",
+      "dropped", "gaps", "regress", "rate", "stale");
   for (const auto& s : f.streams) {
     const auto* info = r.stream_info(s.id);
     const double dur = static_cast<double>(s.last_time_ns - s.first_time_ns) / 1e9;
-    const double measured = s.records > 1 && dur > 0 ? static_cast<double>(s.records - 1) / dur : 0.0;
+    const double measured =
+        s.records > 1 && dur > 0 ? static_cast<double>(s.records - 1) / dur : 0.0;
     std::cout << std::format(
-        "{:>3} {:<14} {:<10} {:>8.2f} {:>9.2f} {:>9} {:>10.3f} {:>9.3f} {:>6.2f} {:>8} {:>5} {:>7} {:>5} {:>5}\n",
+        "{:>3} {:<14} {:<10} {:>8.2f} {:>9.2f} {:>9} {:>10.3f} {:>9.3f} {:>6.2f} {:>8} {:>5} {:>7} "
+        "{:>5} {:>5}\n",
         s.id, stream_name(r, s.id), info != nullptr ? mr::to_string(info->kind) : "?",
         info != nullptr ? info->nominal_rate_hz : 0.0, measured, s.records, mb(s.payload_bytes),
         mb(s.stored_bytes),
-        s.stored_bytes > 0 ? static_cast<double>(s.payload_bytes) / static_cast<double>(s.stored_bytes) : 0.0,
+        s.stored_bytes > 0
+            ? static_cast<double>(s.payload_bytes) / static_cast<double>(s.stored_bytes)
+            : 0.0,
         s.dropped, s.seq_gaps, s.ts_regressions, s.rate_events, s.stale_events);
   }
-  std::cout << "\n(ratio = payload bytes / chunk bytes on disk; chunk bytes include record headers)\n";
+  std::cout
+      << "\n(ratio = payload bytes / chunk bytes on disk; chunk bytes include record headers)\n";
 }
 
 int print_events(const mr::Reader& r, std::int64_t limit) {
@@ -109,19 +119,21 @@ int verify(const mr::Reader& r) {
     const auto& c = r.footer().chunks[i];
     auto h = mr::parse_and_verify_chunk(r.file_bytes().subspan(c.offset, c.total_size), dec, body);
     if (!h) {
-      std::cout << std::format("verify: chunk {} at offset {} FAILED: {}\n", i, c.offset, h.error().describe());
+      std::cout << std::format("verify: chunk {} at offset {} FAILED: {}\n", i, c.offset,
+                               h.error().describe());
       return 1;
     }
     bytes += c.total_size;
   }
   const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-  std::cout << std::format("\nverify: all {} chunks OK ({:.2f} MB in {:.3f} s)\n", r.footer().chunks.size(),
-                           mb(bytes), secs);
+  std::cout << std::format("\nverify: all {} chunks OK ({:.2f} MB in {:.3f} s)\n",
+                           r.footer().chunks.size(), mb(bytes), secs);
   return 0;
 }
 
 int run(int argc, const char* const* argv) {
-  mr::cli::ArgParser args("mr_inspect", "Prints a summary, per-stream statistics and quality events of a log.");
+  mr::cli::ArgParser args("mr_inspect",
+                          "Prints a summary, per-stream statistics and quality events of a log.");
   args.positional("file", "log file (*.mrlog)");
   args.flag("events", "list quality and trigger events");
   args.option("limit", "maximum events to list (-1 = all)", "50");

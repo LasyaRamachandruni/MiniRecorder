@@ -1,9 +1,9 @@
-#include <mr/sensors.hpp>
-
 #include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <thread>
+
+#include <mr/sensors.hpp>
 
 namespace mr {
 namespace {
@@ -80,7 +80,9 @@ class GpsGenerator final : public SignalGenerator {
 class WheelGenerator final : public SignalGenerator {
  public:
   WheelGenerator(const VehicleProfile& p, std::uint64_t seed) : profile_(p), rng_(seed) {}
-  [[nodiscard]] std::size_t payload_size() const noexcept override { return WheelSpeedFrame::kSize; }
+  [[nodiscard]] std::size_t payload_size() const noexcept override {
+    return WheelSpeedFrame::kSize;
+  }
   void generate(double t_s, std::uint64_t /*seq*/, MutableByteSpan out) override {
     const VehicleState s = vehicle_state(profile_, t_s);
     constexpr double kHalfTrack = 0.8;  // m
@@ -117,7 +119,8 @@ class CameraGenerator final : public SignalGenerator {
   }
 
   void generate(double /*t_s*/, std::uint64_t seq, MutableByteSpan out) override {
-    encode(CameraFrameHeader{.width = width_, .height = height_, .format = 0, .frame_id = seq}, out);
+    encode(CameraFrameHeader{.width = width_, .height = height_, .format = 0, .frame_id = seq},
+           out);
     // Pan across the texture to emulate forward motion.
     const std::size_t ox = (seq * 5) % width_;
     const std::size_t oy = (seq * 2) % height_;
@@ -139,7 +142,8 @@ class CameraGenerator final : public SignalGenerator {
   }
 
  private:
-  static constexpr std::array<int, 16> kNoiseTable{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, -1, -1, -1, 2, -2};
+  static constexpr std::array<int, 16> kNoiseTable{0, 0, 0, 0,  0,  0,  0, 0,
+                                                   1, 1, 1, -1, -1, -1, 2, -2};
 
   // xorshift64*: fast, good enough for sensor noise.
   std::uint64_t next_noise() noexcept {
@@ -186,7 +190,8 @@ class CameraGenerator final : public SignalGenerator {
       }
     }
     for (std::size_t y = 0; y < tex_h_; ++y) {
-      const double gradient = 50.0 - 100.0 * static_cast<double>(y % height_) / static_cast<double>(height_);
+      const double gradient =
+          50.0 - 100.0 * static_cast<double>(y % height_) / static_cast<double>(height_);
       for (std::size_t x = 0; x < tex_w_; ++x) {
         const double v = acc[y * tex_w_ + x] * 0.7 + 40.0 + gradient;
         texture_[y * tex_w_ + x] = static_cast<std::uint8_t>(std::clamp(v, 0.0, 255.0));
@@ -237,8 +242,8 @@ VehicleState vehicle_state(const VehicleProfile& p, double t_s) noexcept {
   const double theta = p.cruise_mps * t_s / p.track_radius_m;
   const double lat0_rad = p.origin_lat_deg * std::numbers::pi / 180.0;
   s.latitude_deg = p.origin_lat_deg + p.track_radius_m * std::sin(theta) / kMetersPerDegLat;
-  s.longitude_deg = p.origin_lon_deg +
-                    p.track_radius_m * (1.0 - std::cos(theta)) / (kMetersPerDegLat * std::cos(lat0_rad));
+  s.longitude_deg = p.origin_lon_deg + p.track_radius_m * (1.0 - std::cos(theta)) /
+                                           (kMetersPerDegLat * std::cos(lat0_rad));
   s.heading_deg = std::fmod(theta * 180.0 / std::numbers::pi, 360.0);
   return s;
 }
@@ -259,8 +264,8 @@ std::unique_ptr<SignalGenerator> make_camera_generator(std::uint16_t width, std:
 
 // ---------------------------------------------------------------- producer
 
-SensorProducer::SensorProducer(const SensorConfig& config, std::unique_ptr<SignalGenerator> generator,
-                               RecordRing& ring)
+SensorProducer::SensorProducer(const SensorConfig& config,
+                               std::unique_ptr<SignalGenerator> generator, RecordRing& ring)
     : config_(config), generator_(std::move(generator)), ring_(&ring), rng_(config_.seed) {}
 
 void SensorProducer::run(const std::stop_token& stop, Clock::time_point start) {
@@ -269,7 +274,8 @@ void SensorProducer::run(const std::stop_token& stop, Clock::time_point start) {
   const double scale = std::max(config_.rate_scale, 1e-3);
   const std::int64_t start_ns = to_ns(start);
   const double max_jitter = static_cast<double>(period_ns) / 4.0;
-  std::normal_distribution<double> jitter(0.0, config_.jitter_fraction * static_cast<double>(period_ns));
+  std::normal_distribution<double> jitter(0.0,
+                                          config_.jitter_fraction * static_cast<double>(period_ns));
   std::uniform_real_distribution<double> uniform(0.0, 1.0);
   const FaultConfig& faults = config_.faults;
   const std::size_t size = generator_->payload_size();
@@ -286,8 +292,8 @@ void SensorProducer::run(const std::stop_token& stop, Clock::time_point start) {
       continue;
     }
     if (config_.pacing == Pacing::kRealTime) {
-      const auto offset = std::chrono::nanoseconds(
-          static_cast<std::int64_t>(static_cast<double>(k) * static_cast<double>(period_ns) / scale));
+      const auto offset = std::chrono::nanoseconds(static_cast<std::int64_t>(
+          static_cast<double>(k) * static_cast<double>(period_ns) / scale));
       sleep_until_or_stop(start + offset, stop);
     }
     if (faults.stall_probability > 0 && uniform(rng_) < faults.stall_probability) {
@@ -307,11 +313,12 @@ void SensorProducer::run(const std::stop_token& stop, Clock::time_point start) {
       flags |= record_flags::kInjectedFault;
     }
 
-    const RecordMeta meta{.timestamp_ns = ts, .seq = seq, .stream_id = config_.stream, .flags = flags};
+    const RecordMeta meta{
+        .timestamp_ns = ts, .seq = seq, .stream_id = config_.stream, .flags = flags};
     const double t_s = static_cast<double>(k) / rate;
-    const PushResult r = ring_->push_with(meta, to_ns(Clock::now()), size, [&](MutableByteSpan out) {
-      generator_->generate(t_s, seq, out);
-    });
+    const PushResult r =
+        ring_->push_with(meta, to_ns(Clock::now()), size,
+                         [&](MutableByteSpan out) { generator_->generate(t_s, seq, out); });
     if (r == PushResult::kStopped) {
       break;
     }

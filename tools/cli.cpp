@@ -51,7 +51,8 @@ Status ArgParser::parse(int argc, const char* const* argv) {
     opt.given = true;
     if (opt.is_flag) {
       if (inline_value) {
-        return make_error(Errc::kInvalidArgument, "flag --" + std::string(name) + " takes no value");
+        return make_error(Errc::kInvalidArgument,
+                          "flag --" + std::string(name) + " takes no value");
       }
       continue;
     }
@@ -68,7 +69,8 @@ Status ArgParser::parse(int argc, const char* const* argv) {
     required += p.required ? 1 : 0;
   }
   if (positionals_.size() < required) {
-    return make_error(Errc::kInvalidArgument, "missing argument <" + positional_specs_[positionals_.size()].name + ">");
+    return make_error(Errc::kInvalidArgument,
+                      "missing argument <" + positional_specs_[positionals_.size()].name + ">");
   }
   if (positionals_.size() > positional_specs_.size()) {
     return make_error(Errc::kInvalidArgument, "too many arguments");
@@ -101,9 +103,13 @@ std::string ArgParser::usage() const {
   return out.str();
 }
 
-const std::string& ArgParser::get(const std::string& name) const { return options_.at(name).value; }
+const std::string& ArgParser::get(const std::string& name) const {
+  return options_.at(name).value;
+}
 
-bool ArgParser::is_set(const std::string& name) const { return options_.at(name).given; }
+bool ArgParser::is_set(const std::string& name) const {
+  return options_.at(name).given;
+}
 
 Result<std::int64_t> ArgParser::get_int(const std::string& name) const {
   const std::string& v = get(name);
@@ -140,7 +146,8 @@ std::vector<std::string> split(std::string_view text, char sep) {
   std::size_t start = 0;
   for (;;) {
     const std::size_t pos = text.find(sep, start);
-    out.emplace_back(text.substr(start, pos == std::string_view::npos ? std::string_view::npos : pos - start));
+    out.emplace_back(
+        text.substr(start, pos == std::string_view::npos ? std::string_view::npos : pos - start));
     if (pos == std::string_view::npos) {
       break;
     }
@@ -166,8 +173,9 @@ Percentiles percentiles(std::vector<std::int64_t> samples) {
   p.p99_ns = at(0.99);
   p.p999_ns = at(0.999);
   p.max_ns = static_cast<double>(samples.back());
-  const long double sum = std::accumulate(samples.begin(), samples.end(), 0.0L,
-                                          [](long double acc, std::int64_t v) { return acc + static_cast<long double>(v); });
+  const long double sum = std::accumulate(
+      samples.begin(), samples.end(), 0.0L,
+      [](long double acc, std::int64_t v) { return acc + static_cast<long double>(v); });
   p.mean_ns = static_cast<double>(sum / static_cast<long double>(samples.size()));
   return p;
 }

@@ -1,5 +1,3 @@
-#include <mr/recorder.hpp>
-
 #include <algorithm>
 #include <atomic>
 #include <cstring>
@@ -8,6 +6,7 @@
 
 #include <mr/events.hpp>
 #include <mr/kitti.hpp>
+#include <mr/recorder.hpp>
 
 namespace mr {
 namespace {
@@ -119,15 +118,21 @@ struct Recorder::Impl {
     }
     std::array<std::byte, kEventPayloadSize> buf{};
     encode_event(e, buf);
-    return writer->append(
-        {.timestamp_ns = e.timestamp_ns, .seq = event_seq++, .stream_id = kEventStreamId, .flags = 0}, buf,
-        to_ns(Clock::now()));
+    return writer->append({.timestamp_ns = e.timestamp_ns,
+                           .seq = event_seq++,
+                           .stream_id = kEventStreamId,
+                           .flags = 0},
+                          buf, to_ns(Clock::now()));
   }
 
   Status fire_trigger(TriggerReason reason, StreamId source, std::int64_t ts) {
-    const auto post_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(config.trigger.post_window).count();
-    MR_RETURN_IF_ERROR(emit_event({.stream = source, .kind = EventKind::kTrigger, .timestamp_ns = ts,
-                                   .value = static_cast<std::int64_t>(reason), .expected = ts + post_ns}));
+    const auto post_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(config.trigger.post_window).count();
+    MR_RETURN_IF_ERROR(emit_event({.stream = source,
+                                   .kind = EventKind::kTrigger,
+                                   .timestamp_ns = ts,
+                                   .value = static_cast<std::int64_t>(reason),
+                                   .expected = ts + post_ns}));
     return window->on_trigger(ts);
   }
 
@@ -183,7 +188,8 @@ struct Recorder::Impl {
     for (Stream& s : streams) {
       const std::uint64_t lost = s.ring->counters().lost();
       if (lost > s.reported_lost) {
-        MR_RETURN_IF_ERROR(emit_event({.stream = s.id, .kind = EventKind::kRecordsDropped,
+        MR_RETURN_IF_ERROR(emit_event({.stream = s.id,
+                                       .kind = EventKind::kRecordsDropped,
                                        .timestamp_ns = s.last_ts,
                                        .value = static_cast<std::int64_t>(lost - s.reported_lost),
                                        .expected = 0}));
@@ -307,10 +313,14 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
     s.ring = std::make_unique<RecordRing>(setup.ring_capacity, payload, setup.policy);
     max_payload = std::max(max_payload, payload);
     monitored.push_back({.id = s.id, .nominal_rate_hz = setup.rate_hz});
-    wopts.streams.push_back({.id = s.id, .kind = setup.kind, .nominal_rate_hz = setup.rate_hz, .name = setup.name});
+    wopts.streams.push_back(
+        {.id = s.id, .kind = setup.kind, .nominal_rate_hz = setup.rate_hz, .name = setup.name});
     impl->streams.push_back(std::move(s));
   }
-  wopts.streams.push_back({.id = kEventStreamId, .kind = SensorKind::kEvents, .nominal_rate_hz = 0.0, .name = "_events"});
+  wopts.streams.push_back({.id = kEventStreamId,
+                           .kind = SensorKind::kEvents,
+                           .nominal_rate_hz = 0.0,
+                           .name = "_events"});
 
   // Producers.
   RecordRing* kitti_imu = nullptr;
@@ -318,9 +328,9 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
   StreamId kitti_imu_id = 0;
   StreamId kitti_gps_id = 0;
   for (Impl::Stream& s : impl->streams) {
-    const bool from_kitti = kitti_samples &&
-                            ((s.setup.kind == SensorKind::kImu && kitti_imu == nullptr) ||
-                             (s.setup.kind == SensorKind::kGps && kitti_gps == nullptr));
+    const bool from_kitti =
+        kitti_samples && ((s.setup.kind == SensorKind::kImu && kitti_imu == nullptr) ||
+                          (s.setup.kind == SensorKind::kGps && kitti_gps == nullptr));
     if (from_kitti) {
       if (s.setup.kind == SensorKind::kImu) {
         kitti_imu = s.ring.get();
@@ -338,15 +348,18 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
     sc.pacing = cfg.pacing;
     sc.rate_scale = cfg.rate_scale;
     sc.seed = cfg.seed * 1000 + s.id;
-    s.producer = std::make_unique<SensorProducer>(sc, make_generator(s.setup, cfg.vehicle, sc.seed), *s.ring);
+    s.producer = std::make_unique<SensorProducer>(sc, make_generator(s.setup, cfg.vehicle, sc.seed),
+                                                  *s.ring);
   }
   if (kitti_samples) {
     if (kitti_imu == nullptr || kitti_gps == nullptr) {
       return make_error(Errc::kInvalidArgument, "KITTI replay needs one imu and one gps stream");
     }
     impl->kitti = std::make_unique<KittiOxtsReplay>(
-        KittiReplayConfig{.imu_stream = kitti_imu_id, .gps_stream = kitti_gps_id,
-                          .rate_scale = cfg.rate_scale, .unpaced = cfg.pacing == Pacing::kUnpaced,
+        KittiReplayConfig{.imu_stream = kitti_imu_id,
+                          .gps_stream = kitti_gps_id,
+                          .rate_scale = cfg.rate_scale,
+                          .unpaced = cfg.pacing == Pacing::kUnpaced,
                           .loop = cfg.kitti_loop},
         std::move(*kitti_samples), *kitti_imu, *kitti_gps);
   }
@@ -363,7 +376,8 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
   impl->privacy = std::make_unique<PrivacyFilter>(cfg.privacy);
   StorageWriter* w = impl->writer.get();
   impl->window = std::make_unique<EventWindow>(
-      cfg.trigger, [w](const RecordMeta& m, ByteSpan p, std::int64_t e) { return w->append(m, p, e); });
+      cfg.trigger,
+      [w](const RecordMeta& m, ByteSpan p, std::int64_t e) { return w->append(m, p, e); });
   return std::make_unique<Recorder>(PrivateTag{}, std::move(impl));
 }
 
@@ -381,13 +395,15 @@ Status Recorder::start() {
     if (st.producer) {
       SensorProducer* p = st.producer.get();
       const auto start = s.started_at;
-      s.producer_threads.emplace_back([p, start](const std::stop_token& stop) { p->run(stop, start); });
+      s.producer_threads.emplace_back(
+          [p, start](const std::stop_token& stop) { p->run(stop, start); });
     }
   }
   if (s.kitti) {
     KittiOxtsReplay* k = s.kitti.get();
     const auto start = s.started_at;
-    s.producer_threads.emplace_back([k, start](const std::stop_token& stop) { k->run(stop, start); });
+    s.producer_threads.emplace_back(
+        [k, start](const std::stop_token& stop) { k->run(stop, start); });
   }
   return ok_status();
 }

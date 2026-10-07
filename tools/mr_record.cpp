@@ -1,7 +1,5 @@
 // mr_record: runs the simulated (or KITTI-fed) sensor set and records a log.
 
-#include <unistd.h>
-
 #include <atomic>
 #include <chrono>
 #include <csignal>
@@ -11,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <unistd.h>
 
 #include <mr/recorder.hpp>
 
@@ -19,10 +18,13 @@
 namespace {
 
 // Set from the signal handler; lock-free atomics are async-signal-safe.
-std::atomic<bool> g_interrupted{false};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::atomic<bool> g_interrupted{
+    false};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 static_assert(std::atomic<bool>::is_always_lock_free);
 
-extern "C" void on_signal(int /*sig*/) { g_interrupted.store(true); }
+extern "C" void on_signal(int /*sig*/) {
+  g_interrupted.store(true);
+}
 
 std::string json_escape(std::string_view s) {
   std::string out;
@@ -40,7 +42,8 @@ mr::Result<mr::FaultConfig> parse_faults(const std::string& text) {
   for (const std::string& item : mr::cli::split(text, ',')) {
     const auto kv = mr::cli::split(item, '=');
     if (kv.size() != 2) {
-      return mr::make_error(mr::Errc::kInvalidArgument, "faults: expected key=value, got '" + item + "'");
+      return mr::make_error(mr::Errc::kInvalidArgument,
+                            "faults: expected key=value, got '" + item + "'");
     }
     double v = 0;
     try {
@@ -69,7 +72,8 @@ mr::Status apply_per_stream(const std::string& text, std::vector<mr::StreamSetup
   for (const std::string& item : mr::cli::split(text, ',')) {
     const auto kv = mr::cli::split(item, '=');
     if (kv.size() != 2) {
-      return mr::make_error(mr::Errc::kInvalidArgument, "expected stream=value, got '" + item + "'");
+      return mr::make_error(mr::Errc::kInvalidArgument,
+                            "expected stream=value, got '" + item + "'");
     }
     bool matched = false;
     for (mr::StreamSetup& s : streams) {
@@ -80,7 +84,8 @@ mr::Status apply_per_stream(const std::string& text, std::vector<mr::StreamSetup
       if (is_policy) {
         const auto p = mr::parse_overflow_policy(kv[1]);
         if (!p) {
-          return mr::make_error(mr::Errc::kInvalidArgument, "unknown overflow policy '" + kv[1] + "'");
+          return mr::make_error(mr::Errc::kInvalidArgument,
+                                "unknown overflow policy '" + kv[1] + "'");
         }
         s.policy = *p;
       } else {
@@ -100,10 +105,12 @@ void write_summary_json(const std::string& path, const mr::RecorderConfig& cfg,
   std::ofstream out(path);
   out << "{\n";
   out << std::format("  \"output\": \"{}\",\n", json_escape(r.write.path.string()));
-  out << std::format("  \"mode\": \"{}\",\n", cfg.mode == mr::RecordMode::kTriggered ? "triggered" : "continuous");
+  out << std::format("  \"mode\": \"{}\",\n",
+                     cfg.mode == mr::RecordMode::kTriggered ? "triggered" : "continuous");
   out << std::format("  \"zstd_level\": {},\n", cfg.writer.zstd_level);
   out << std::format("  \"fsync\": \"{}\",\n", mr::describe(cfg.writer.fsync));
-  out << std::format("  \"pacing\": \"{}\",\n", cfg.pacing == mr::Pacing::kUnpaced ? "unpaced" : "realtime");
+  out << std::format("  \"pacing\": \"{}\",\n",
+                     cfg.pacing == mr::Pacing::kUnpaced ? "unpaced" : "realtime");
   out << std::format("  \"rate_scale\": {},\n", cfg.rate_scale);
   out << std::format("  \"elapsed_s\": {:.6f},\n", r.elapsed_s);
   out << std::format("  \"records_written\": {},\n", m.records_written);
@@ -114,7 +121,8 @@ void write_summary_json(const std::string& path, const mr::RecorderConfig& cfg,
   out << std::format("  \"compress_cpu_s\": {:.6f},\n", static_cast<double>(m.compress_ns) / 1e9);
   out << std::format("  \"write_s\": {:.6f},\n", static_cast<double>(m.write_ns) / 1e9);
   out << std::format("  \"fsync_s\": {:.6f},\n", static_cast<double>(m.fsync_ns) / 1e9);
-  out << std::format("  \"append_blocked_s\": {:.6f},\n", static_cast<double>(m.append_blocked_ns) / 1e9);
+  out << std::format("  \"append_blocked_s\": {:.6f},\n",
+                     static_cast<double>(m.append_blocked_ns) / 1e9);
   out << std::format("  \"quality_events\": {},\n", r.quality_events);
   out << std::format("  \"triggers\": {},\n", r.triggers);
   auto latency = [&out](const char* name, const std::vector<std::int64_t>& v) {
@@ -122,8 +130,8 @@ void write_summary_json(const std::string& path, const mr::RecorderConfig& cfg,
     out << std::format(
         "  \"{}\": {{\"count\": {}, \"p50_ms\": {:.4f}, \"p90_ms\": {:.4f}, \"p99_ms\": {:.4f}, "
         "\"p999_ms\": {:.4f}, \"max_ms\": {:.4f}, \"mean_ms\": {:.4f}}},\n",
-        name, p.count, p.p50_ns / 1e6, p.p90_ns / 1e6, p.p99_ns / 1e6, p.p999_ns / 1e6, p.max_ns / 1e6,
-        p.mean_ns / 1e6);
+        name, p.count, p.p50_ns / 1e6, p.p90_ns / 1e6, p.p99_ns / 1e6, p.p999_ns / 1e6,
+        p.max_ns / 1e6, p.mean_ns / 1e6);
   };
   latency("write_latency", m.write_latency_ns);
   latency("durable_latency", m.durable_latency_ns);
@@ -137,13 +145,15 @@ void write_summary_json(const std::string& path, const mr::RecorderConfig& cfg,
       }
     }
     out << std::format(
-        "    {{\"id\": {}, \"name\": \"{}\", \"policy\": \"{}\", \"produced\": {}, \"records\": {}, "
+        "    {{\"id\": {}, \"name\": \"{}\", \"policy\": \"{}\", \"produced\": {}, \"records\": "
+        "{}, "
         "\"payload_bytes\": {}, \"stored_bytes\": {}, \"ring_dropped_newest\": {}, "
         "\"ring_evicted_oldest\": {}, \"producer_blocked_s\": {:.6f}, \"seq_gaps\": {}, "
         "\"ts_regressions\": {}, \"rate_events\": {}, \"stale_events\": {}}}{}\n",
         st.id, sr != nullptr ? json_escape(sr->name) : "_events",
-        sr != nullptr ? mr::to_string(sr->policy) : "n/a", sr != nullptr ? sr->sensor.emitted : st.records,
-        st.records, st.payload_bytes, st.stored_bytes, sr != nullptr ? sr->ring.dropped_newest : 0,
+        sr != nullptr ? mr::to_string(sr->policy) : "n/a",
+        sr != nullptr ? sr->sensor.emitted : st.records, st.records, st.payload_bytes,
+        st.stored_bytes, sr != nullptr ? sr->ring.dropped_newest : 0,
         sr != nullptr ? sr->ring.evicted_oldest : 0,
         sr != nullptr ? static_cast<double>(sr->ring.blocked_ns) / 1e9 : 0.0, st.seq_gaps,
         st.ts_regressions, st.rate_events, st.stale_events,
@@ -229,8 +239,9 @@ mr::Result<Job> build_job(const mr::cli::ArgParser& args) {
     return *parse_error;
   }
   if (chunk_kb <= 0 || threads <= 0 || inflight <= 0 || chunk_age <= 0) {
-    return mr::make_error(mr::Errc::kInvalidArgument,
-                          "chunk-kb, chunk-age-ms, compression-threads and inflight must be positive");
+    return mr::make_error(
+        mr::Errc::kInvalidArgument,
+        "chunk-kb, chunk-age-ms, compression-threads and inflight must be positive");
   }
 
   // Streams.
@@ -251,8 +262,8 @@ mr::Result<Job> build_job(const mr::cli::ArgParser& args) {
     unsigned h = 0;
     double hz = 0;
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,cert-err34-c): simple fixed format
-    if (std::sscanf(args.get("camera").c_str(), "%ux%u@%lf", &w, &h, &hz) != 3 || w == 0 || h == 0 ||
-        w > 4096 || h > 4096 || !(hz > 0)) {
+    if (std::sscanf(args.get("camera").c_str(), "%ux%u@%lf", &w, &h, &hz) != 3 || w == 0 ||
+        h == 0 || w > 4096 || h > 4096 || !(hz > 0)) {
       return mr::make_error(mr::Errc::kInvalidArgument, "--camera expects WIDTHxHEIGHT@HZ");
     }
     add_stream("camera_front", mr::SensorKind::kCamera, hz, 16);
@@ -326,7 +337,6 @@ mr::Result<Job> build_job(const mr::cli::ArgParser& args) {
     cfg.kitti_oxts_dir = args.get("kitti");
   }
 
-
   return Job{.cfg = std::move(cfg),
              .duration_s = duration,
              .quiet = args.is_set("quiet"),
@@ -339,16 +349,18 @@ void print_report(const mr::RecorderReport& r) {
       "wrote {} ({} records, {} chunks, {:.1f} MB on disk, {:.1f} MB of records, ratio {:.2f})\n"
       "elapsed {:.2f} s: {:.0f} records/s, {:.1f} MB/s of records, {:.1f} MB/s to disk\n"
       "quality events: {}, triggers: {}\n",
-      r.write.path.string(), m.records_written, m.chunks_written, static_cast<double>(m.file_bytes) / 1e6,
-      static_cast<double>(m.record_bytes) / 1e6,
-      m.file_bytes > 0 ? static_cast<double>(m.record_bytes) / static_cast<double>(m.file_bytes) : 0.0,
+      r.write.path.string(), m.records_written, m.chunks_written,
+      static_cast<double>(m.file_bytes) / 1e6, static_cast<double>(m.record_bytes) / 1e6,
+      m.file_bytes > 0 ? static_cast<double>(m.record_bytes) / static_cast<double>(m.file_bytes)
+                       : 0.0,
       r.elapsed_s, static_cast<double>(m.records_written) / r.elapsed_s,
       static_cast<double>(m.record_bytes) / 1e6 / r.elapsed_s,
       static_cast<double>(m.file_bytes) / 1e6 / r.elapsed_s, r.quality_events, r.triggers);
   for (const auto& s : r.streams) {
-    std::cout << std::format("  {:<13} produced {:>8}  dropped {:>6}  evicted {:>6}  blocked {:.3f} s\n",
-                             s.name, s.sensor.emitted, s.ring.dropped_newest, s.ring.evicted_oldest,
-                             static_cast<double>(s.ring.blocked_ns) / 1e9);
+    std::cout << std::format(
+        "  {:<13} produced {:>8}  dropped {:>6}  evicted {:>6}  blocked {:.3f} s\n", s.name,
+        s.sensor.emitted, s.ring.dropped_newest, s.ring.evicted_oldest,
+        static_cast<double>(s.ring.blocked_ns) / 1e9);
   }
 }
 
@@ -375,9 +387,10 @@ int record(const Job& job) {
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     if (!job.quiet && std::chrono::steady_clock::now() >= next_print) {
       next_print += std::chrono::seconds(1);
-      std::cerr << std::format("  {:.0f}s  {} records collected\n",
-                               std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(),
-                               (*recorder)->collected_records());
+      std::cerr << std::format(
+          "  {:.0f}s  {} records collected\n",
+          std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(),
+          (*recorder)->collected_records());
     }
   }
   auto report = (*recorder)->stop();

@@ -1,10 +1,10 @@
-#include <gtest/gtest.h>
-
 #include <array>
 #include <cstdint>
 #include <random>
 #include <string_view>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include <mr/bytes.hpp>
 #include <mr/crc32c.hpp>
