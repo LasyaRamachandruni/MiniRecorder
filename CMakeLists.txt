@@ -25,6 +25,12 @@ include(CompilerWarnings)
 include(Sanitizers)
 include(Dependencies)
 
+if(MR_BUILD_FUZZERS)
+  # Coverage instrumentation for all code the fuzzer reaches; only the fuzz
+  # target itself links the libFuzzer main.
+  add_compile_options(-fsanitize=fuzzer-no-link)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(tools)
 
