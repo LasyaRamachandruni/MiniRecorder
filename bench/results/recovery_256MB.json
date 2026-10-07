@@ -1,0 +1,9 @@
+{"label": "256MB", "partial_bytes": 283151865, "runs": [
+{"mode": "verify", "cache": "cold", "seconds": 0.569, "chunks": 276, "bytes_kept": 283151865, "bytes_discarded": 0}
+,
+{"mode": "verify", "cache": "warm", "seconds": 0.548, "chunks": 276, "bytes_kept": 283151865, "bytes_discarded": 0}
+,
+{"mode": "no-verify", "cache": "cold", "seconds": 0.146, "chunks": 276, "bytes_kept": 283151865, "bytes_discarded": 0}
+,
+{"mode": "no-verify", "cache": "warm", "seconds": 0.109, "chunks": 276, "bytes_kept": 283151865, "bytes_discarded": 0}
+]}

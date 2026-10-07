@@ -1,0 +1,29 @@
+{
+  "output": "build-bench-work/tp.mrlog",
+  "mode": "continuous",
+  "zstd_level": 3,
+  "fsync": "interval:100",
+  "pacing": "unpaced",
+  "rate_scale": 1,
+  "elapsed_s": 8.040028,
+  "records_written": 244069,
+  "record_bytes": 1408868696,
+  "file_bytes": 1116217538,
+  "chunks_written": 1198,
+  "fsync_count": 68,
+  "compress_cpu_s": 15.677615,
+  "write_s": 0.455273,
+  "fsync_s": 1.331947,
+  "append_blocked_s": 7.646749,
+  "quality_events": 166,
+  "triggers": 0,
+  "write_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "durable_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "streams": [
+    {"id": 0, "name": "imu", "policy": "block", "produced": 129123, "records": 129123, "payload_bytes": 6197904, "stored_bytes": 6696348, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 7.927341, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 42},
+    {"id": 1, "name": "gps", "policy": "block", "produced": 11806, "records": 11806, "payload_bytes": 472240, "stored_bytes": 403652, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 8.007824, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 2, "name": "wheel_can", "policy": "block", "produced": 98434, "records": 98434, "payload_bytes": 1574944, "stored_bytes": 1267047, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 7.960177, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 41},
+    {"id": 3, "name": "camera_front", "policy": "block", "produced": 4540, "records": 4540, "payload_bytes": 1394760640, "stored_bytes": 1107787965, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 5.082713, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 63, "name": "_events", "policy": "n/a", "produced": 166, "records": 166, "payload_bytes": 5312, "stored_bytes": 4250, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0}
+  ]
+}

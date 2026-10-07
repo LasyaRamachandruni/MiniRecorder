@@ -1,0 +1,1 @@
+{"file": "build-bench-work/replay.mrlog", "speed": 1, "spin_us": 200, "messages": 3403, "bytes": 92588072, "elapsed_s": 10.005657, "lateness_us": {"p50": 0.46, "p90": 4.32, "p99": 1727.38, "p999": 3094.32, "max": 5421.94}}

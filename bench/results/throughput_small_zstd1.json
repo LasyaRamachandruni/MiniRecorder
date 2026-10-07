@@ -1,0 +1,28 @@
+{
+  "output": "build-bench-work/tp.mrlog",
+  "mode": "continuous",
+  "zstd_level": 1,
+  "fsync": "interval:100",
+  "pacing": "unpaced",
+  "rate_scale": 1,
+  "elapsed_s": 8.002623,
+  "records_written": 24993501,
+  "record_bytes": 1422777936,
+  "file_bytes": 837694213,
+  "chunks_written": 1358,
+  "fsync_count": 71,
+  "compress_cpu_s": 7.398803,
+  "write_s": 0.387658,
+  "fsync_s": 1.044171,
+  "append_blocked_s": 0.008349,
+  "quality_events": 0,
+  "triggers": 0,
+  "write_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "durable_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "streams": [
+    {"id": 0, "name": "imu", "policy": "block", "produced": 12523758, "records": 12523758, "payload_bytes": 601140384, "stored_bytes": 645478523, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 1.094508, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 1, "name": "gps", "policy": "block", "produced": 928235, "records": 928235, "payload_bytes": 37129400, "stored_bytes": 32068356, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 7.608488, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 2, "name": "wheel_can", "policy": "block", "produced": 11541508, "records": 11541508, "payload_bytes": 184664128, "stored_bytes": 160081514, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 2.783621, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 63, "name": "_events", "policy": "n/a", "produced": 0, "records": 0, "payload_bytes": 0, "stored_bytes": 0, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0}
+  ]
+}

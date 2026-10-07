@@ -1,0 +1,29 @@
+{
+  "output": "build-bench-work/tp.mrlog",
+  "mode": "continuous",
+  "zstd_level": 1,
+  "fsync": "interval:100",
+  "pacing": "unpaced",
+  "rate_scale": 1,
+  "elapsed_s": 8.034095,
+  "records_written": 6551247,
+  "record_bytes": 2573769904,
+  "file_bytes": 2179053477,
+  "chunks_written": 2153,
+  "fsync_count": 59,
+  "compress_cpu_s": 11.010381,
+  "write_s": 1.699253,
+  "fsync_s": 2.232374,
+  "append_blocked_s": 3.066453,
+  "quality_events": 0,
+  "triggers": 0,
+  "write_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "durable_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "streams": [
+    {"id": 0, "name": "imu", "policy": "block", "produced": 3908096, "records": 3908096, "payload_bytes": 187588608, "stored_bytes": 201386930, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 5.613842, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 1, "name": "gps", "policy": "block", "produced": 230873, "records": 230873, "payload_bytes": 9234920, "stored_bytes": 7977083, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 7.929091, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 2, "name": "wheel_can", "policy": "block", "produced": 2405178, "records": 2405178, "payload_bytes": 38482848, "stored_bytes": 33332689, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 6.566490, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 3, "name": "camera_front", "policy": "block", "produced": 7100, "records": 7100, "payload_bytes": 2181233600, "stored_bytes": 1936252659, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 1.631119, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 63, "name": "_events", "policy": "n/a", "produced": 0, "records": 0, "payload_bytes": 0, "stored_bytes": 0, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0}
+  ]
+}

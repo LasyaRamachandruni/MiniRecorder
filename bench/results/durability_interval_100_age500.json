@@ -1,0 +1,29 @@
+{
+  "output": "build-bench-work/dur.mrlog",
+  "mode": "continuous",
+  "zstd_level": 3,
+  "fsync": "interval:100",
+  "pacing": "realtime",
+  "rate_scale": 1,
+  "elapsed_s": 10.000304,
+  "records_written": 3400,
+  "record_bytes": 92362400,
+  "file_bytes": 73327664,
+  "chunks_written": 132,
+  "fsync_count": 96,
+  "compress_cpu_s": 0.909841,
+  "write_s": 0.024385,
+  "fsync_s": 0.148633,
+  "append_blocked_s": 0.000024,
+  "quality_events": 0,
+  "triggers": 0,
+  "write_latency": {"count": 3400, "p50_ms": 227.5873, "p90_ms": 454.1548, "p99_ms": 507.1408, "p999_ms": 517.8751, "max_ms": 519.3382, "mean_ms": 237.1345},
+  "durable_latency": {"count": 3400, "p50_ms": 274.6609, "p90_ms": 503.4075, "p99_ms": 585.8080, "p999_ms": 615.3212, "max_ms": 620.3105, "mean_ms": 283.2491},
+  "streams": [
+    {"id": 0, "name": "imu", "policy": "drop-oldest", "produced": 2000, "records": 2000, "payload_bytes": 96000, "stored_bytes": 106169, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 1, "name": "gps", "policy": "drop-oldest", "produced": 100, "records": 100, "payload_bytes": 4000, "stored_bytes": 5629, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 2, "name": "wheel_can", "policy": "drop-oldest", "produced": 1000, "records": 1000, "payload_bytes": 16000, "stored_bytes": 14347, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 3, "name": "camera_front", "policy": "drop-oldest", "produced": 300, "records": 300, "payload_bytes": 92164800, "stored_bytes": 73194411, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 63, "name": "_events", "policy": "n/a", "produced": 0, "records": 0, "payload_bytes": 0, "stored_bytes": 0, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0}
+  ]
+}

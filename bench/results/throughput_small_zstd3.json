@@ -1,0 +1,28 @@
+{
+  "output": "build-bench-work/tp.mrlog",
+  "mode": "continuous",
+  "zstd_level": 3,
+  "fsync": "interval:100",
+  "pacing": "unpaced",
+  "rate_scale": 1,
+  "elapsed_s": 8.007676,
+  "records_written": 17925353,
+  "record_bytes": 1078923792,
+  "file_bytes": 667830646,
+  "chunks_written": 1030,
+  "fsync_count": 73,
+  "compress_cpu_s": 13.491418,
+  "write_s": 0.357526,
+  "fsync_s": 0.864363,
+  "append_blocked_s": 0.063052,
+  "quality_events": 0,
+  "triggers": 0,
+  "write_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "durable_latency": {"count": 0, "p50_ms": 0.0000, "p90_ms": 0.0000, "p99_ms": 0.0000, "p999_ms": 0.0000, "max_ms": 0.0000, "mean_ms": 0.0000},
+  "streams": [
+    {"id": 0, "name": "imu", "policy": "block", "produced": 10864127, "records": 10864127, "payload_bytes": 521478096, "stored_bytes": 562452902, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 2.238316, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 1, "name": "gps", "policy": "block", "produced": 594067, "records": 594067, "payload_bytes": 23762680, "stored_bytes": 20963387, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 7.771412, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 2, "name": "wheel_can", "policy": "block", "produced": 6467159, "records": 6467159, "payload_bytes": 103474544, "stored_bytes": 84364281, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 4.382019, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0},
+    {"id": 63, "name": "_events", "policy": "n/a", "produced": 0, "records": 0, "payload_bytes": 0, "stored_bytes": 0, "ring_dropped_newest": 0, "ring_evicted_oldest": 0, "producer_blocked_s": 0.000000, "seq_gaps": 0, "ts_regressions": 0, "rate_events": 0, "stale_events": 0}
+  ]
+}

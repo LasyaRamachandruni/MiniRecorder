@@ -1,0 +1,31 @@
+-----------------------------------------------------------------------------------------------------------
+Benchmark                                                 Time             CPU   Iterations UserCounters...
+-----------------------------------------------------------------------------------------------------------
+BM_Throughput_SpscQueue/real_time_mean                 16.7 ms         15.9 ms            5 bytes_per_second=968.107Mi/s items_per_second=15.8615M/s
+BM_Throughput_SpscQueue/real_time_median               16.6 ms         16.2 ms            5 bytes_per_second=965.917Mi/s items_per_second=15.8256M/s
+BM_Throughput_SpscQueue/real_time_stddev               1.90 ms         1.26 ms            5 bytes_per_second=104.558Mi/s items_per_second=1.71307M/s
+BM_Throughput_SpscQueue/real_time_cv                  11.39 %          7.90 %             5 bytes_per_second=10.80% items_per_second=10.80%
+BM_Throughput_MutexQueue/real_time_mean                94.8 ms         58.4 ms            5 bytes_per_second=171.644Mi/s items_per_second=2.81221M/s
+BM_Throughput_MutexQueue/real_time_median              88.9 ms         54.1 ms            5 bytes_per_second=179.915Mi/s items_per_second=2.94773M/s
+BM_Throughput_MutexQueue/real_time_stddev              14.0 ms         8.49 ms            5 bytes_per_second=24.3141Mi/s items_per_second=398.363k/s
+BM_Throughput_MutexQueue/real_time_cv                 14.72 %         14.54 %             5 bytes_per_second=14.17% items_per_second=14.17%
+BM_Throughput_CondvarQueue/real_time_mean               119 ms         70.2 ms            5 bytes_per_second=137.638Mi/s items_per_second=2.25506M/s
+BM_Throughput_CondvarQueue/real_time_median             123 ms         71.9 ms            5 bytes_per_second=130.312Mi/s items_per_second=2.13503M/s
+BM_Throughput_CondvarQueue/real_time_stddev            18.0 ms         8.12 ms            5 bytes_per_second=22.0204Mi/s items_per_second=360.783k/s
+BM_Throughput_CondvarQueue/real_time_cv               15.19 %         11.57 %             5 bytes_per_second=16.00% items_per_second=16.00%
+BM_Throughput_RecordRing/48/real_time_mean             34.5 ms         33.8 ms            5 bytes_per_second=348.432Mi/s items_per_second=7.61161M/s
+BM_Throughput_RecordRing/48/real_time_median           34.0 ms         33.2 ms            5 bytes_per_second=353.269Mi/s items_per_second=7.71727M/s
+BM_Throughput_RecordRing/48/real_time_stddev           2.01 ms         1.76 ms            5 bytes_per_second=19.3367Mi/s items_per_second=422.418k/s
+BM_Throughput_RecordRing/48/real_time_cv               5.82 %          5.19 %             5 bytes_per_second=5.55% items_per_second=5.55%
+BM_Throughput_RecordRing/307216/real_time_mean         34.4 ms         34.0 ms            5 bytes_per_second=17.0334Gi/s items_per_second=59.5328k/s
+BM_Throughput_RecordRing/307216/real_time_median       34.7 ms         33.8 ms            5 bytes_per_second=16.876Gi/s items_per_second=58.9828k/s
+BM_Throughput_RecordRing/307216/real_time_stddev       1.16 ms         1.08 ms            5 bytes_per_second=590.634Mi/s items_per_second=2.01592k/s
+BM_Throughput_RecordRing/307216/real_time_cv           3.36 %          3.16 %             5 bytes_per_second=3.39% items_per_second=3.39%
+BM_PingPong_SpscQueue/real_time_mean                    699 ns          690 ns            5 rtt_p50_ns=510.8 rtt_p99_ns=665.4
+BM_PingPong_SpscQueue/real_time_median                  693 ns          683 ns            5 rtt_p50_ns=522 rtt_p99_ns=673
+BM_PingPong_SpscQueue/real_time_stddev                 44.0 ns         39.9 ns            5 rtt_p50_ns=17.7116 rtt_p99_ns=28.6932
+BM_PingPong_SpscQueue/real_time_cv                     6.31 %          5.78 %             5 rtt_p50_ns=3.47% rtt_p99_ns=4.31%
+BM_PingPong_MutexQueue/real_time_mean                  3550 ns         3107 ns            5 rtt_p50_ns=2.171k rtt_p99_ns=19.7616k
+BM_PingPong_MutexQueue/real_time_median                3593 ns         3093 ns            5 rtt_p50_ns=2.185k rtt_p99_ns=19.286k
+BM_PingPong_MutexQueue/real_time_stddev                 208 ns          153 ns            5 rtt_p50_ns=62.0443 rtt_p99_ns=1.00286k
+BM_PingPong_MutexQueue/real_time_cv                    5.86 %          4.92 %             5 rtt_p50_ns=2.86% rtt_p99_ns=5.07%
