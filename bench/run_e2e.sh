@@ -5,9 +5,12 @@
 #   bench/run_e2e.sh [build-dir] [results-dir]
 #
 # Scenarios (all data is SYNTHETIC, from the built-in simulator):
-#   throughput  unpaced producers, block policy (lossless), zstd 1/3/9
+#   throughput  unpaced producers, block policy (lossless), zstd 1/3/9:
+#               full sensor set (bytes are camera dominated) and small-record
+#               only (camera off) to measure the per-record path
 #   durability  real-time nominal rates, latency per fsync policy and chunk age
-#   overload    unpaced producers, zstd 9, small rings, drop-newest/drop-oldest/block
+#   overload    sensors paced at 30x nominal (~275 MB/s offered) into zstd 9
+#               (~55 MB/s capacity here), per overflow policy
 #   recovery    SIGKILL a recorder, then time mr_recover on ~256 MB and ~1 GB files
 #   replay      mr_replay schedule lateness at 1x, sleep-only vs. 200 us spin
 #
@@ -36,6 +39,11 @@ for level in 1 3 9; do
     --zstd-level "$level" --fsync interval:100 --quiet \
     --summary-json "$OUT/throughput_zstd$level.json"
   rm -f "$WORK/tp.mrlog"
+  log "throughput small records only, zstd-$level"
+  "$BIN/mr_record" --out "$WORK/tp.mrlog" --unpaced --policy all=block --duration 8 \
+    --camera off --zstd-level "$level" --fsync interval:100 --quiet \
+    --summary-json "$OUT/throughput_small_zstd$level.json"
+  rm -f "$WORK/tp.mrlog"
 done
 
 # ---------------------------------------------------------------- durability
@@ -53,9 +61,8 @@ done
 # ---------------------------------------------------------------- overload
 for policy in drop-newest drop-oldest block; do
   log "overload policy=$policy"
-  "$BIN/mr_record" --out "$WORK/ov.mrlog" --unpaced --policy "all=$policy" \
-    --ring imu=256,wheel_can=256,gps=64,camera_front=8 --zstd-level 9 \
-    --compression-threads 1 --duration 5 --quiet \
+  "$BIN/mr_record" --out "$WORK/ov.mrlog" --rate-scale 30 --policy "all=$policy" \
+    --zstd-level 9 --duration 5 --quiet \
     --summary-json "$OUT/overload_$policy.json"
   rm -f "$WORK/ov.mrlog"
 done
@@ -73,12 +80,15 @@ recovery_case() {
   local size
   size=$(stat -c %s "$WORK/rec.mrlog.partial")
   cp "$WORK/rec.mrlog.partial" "$WORK/rec_copy.partial"
+  sync
   {
     echo "{\"label\": \"$label\", \"partial_bytes\": $size, \"runs\": ["
     local first=1
     for mode in verify no-verify; do
       for cache in cold warm; do
         cp "$WORK/rec_copy.partial" "$WORK/run.mrlog.partial"
+        # Flush the copy first so recovery's own fdatasync does not pay for it.
+        sync
         local state=warm
         if [ "$cache" = cold ]; then state=$(drop_caches); fi
         local flags=""
