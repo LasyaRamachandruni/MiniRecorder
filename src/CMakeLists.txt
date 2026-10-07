@@ -1,9 +1,11 @@
 add_library(minirecorder
   chunk.cpp
+  file_util.cpp
   crc32c.cpp
   format.cpp
   record.cpp
   record_ring.cpp
+  writer.cpp
   result.cpp
 )
 
