@@ -3,6 +3,7 @@
 // Minimal command line parsing shared by the mr_* tools. Supports
 // "--name value", "--name=value", boolean "--flag" and positional arguments.
 
+#include <charconv>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -57,11 +58,21 @@ class ArgParser {
   bool help_ = false;
 };
 
+// Parses the whole string as a number (no exceptions, no trailing junk).
+template <typename T>
+[[nodiscard]] std::optional<T> parse_number(std::string_view text) {
+  T value{};
+  const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
+  if (ec != std::errc() || ptr != text.data() + text.size()) {
+    return std::nullopt;
+  }
+  return value;
+}
+
 // Splits "a,b,c" into {"a","b","c"}; empty input yields an empty vector.
 [[nodiscard]] std::vector<std::string> split(std::string_view text, char sep);
 
-// Formats a percentile summary of latency samples (nanoseconds), e.g.
-// "p50 1.23 ms  p99 4.56 ms  max 7.89 ms  (n=1000)".
+// Nearest-rank percentiles, maximum and mean of latency samples (ns).
 struct Percentiles {
   std::size_t count = 0;
   double p50_ns = 0;

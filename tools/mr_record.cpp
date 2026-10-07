@@ -45,12 +45,11 @@ mr::Result<mr::FaultConfig> parse_faults(const std::string& text) {
       return mr::make_error(mr::Errc::kInvalidArgument,
                             "faults: expected key=value, got '" + item + "'");
     }
-    double v = 0;
-    try {
-      v = std::stod(kv[1]);
-    } catch (const std::exception&) {
+    const auto parsed = mr::cli::parse_number<double>(kv[1]);
+    if (!parsed || *parsed < 0) {
       return mr::make_error(mr::Errc::kInvalidArgument, "faults: bad number '" + kv[1] + "'");
     }
+    const double v = *parsed;
     if (kv[0] == "gap") {
       f.gap_probability = v;
     } else if (kv[0] == "regress") {
@@ -89,7 +88,12 @@ mr::Status apply_per_stream(const std::string& text, std::vector<mr::StreamSetup
         }
         s.policy = *p;
       } else {
-        s.ring_capacity = static_cast<std::size_t>(std::stoull(kv[1]));
+        const auto capacity = mr::cli::parse_number<std::size_t>(kv[1]);
+        if (!capacity || *capacity == 0 || *capacity > (std::size_t{1} << 20)) {
+          return mr::make_error(mr::Errc::kInvalidArgument,
+                                "ring capacity must be in [1, 1048576], got '" + kv[1] + "'");
+        }
+        s.ring_capacity = *capacity;
       }
     }
     if (!matched) {
