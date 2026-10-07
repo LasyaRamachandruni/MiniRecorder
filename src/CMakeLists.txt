@@ -6,6 +6,8 @@ add_library(minirecorder
   format.cpp
   record.cpp
   reader.cpp
+  sensor_types.cpp
+  sensors.cpp
   record_ring.cpp
   recovery.cpp
   writer.cpp
