@@ -27,7 +27,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     -Wduplicated-cond
     -Wduplicated-branches
     -Wlogical-op
-    -Wuseless-cast
   )
 endif()
 
