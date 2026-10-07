@@ -4,6 +4,7 @@ add_library(minirecorder
   crc32c.cpp
   format.cpp
   record.cpp
+  reader.cpp
   record_ring.cpp
   writer.cpp
   result.cpp
