@@ -124,7 +124,9 @@ void spin_throughput(benchmark::State& state) {
 void BM_Throughput_SpscQueue(benchmark::State& state) {
   spin_throughput<mr::SpscQueue<Msg>>(state);
 }
-void BM_Throughput_MutexQueue(benchmark::State& state) { spin_throughput<MutexQueue<Msg>>(state); }
+void BM_Throughput_MutexQueue(benchmark::State& state) {
+  spin_throughput<MutexQueue<Msg>>(state);
+}
 
 void BM_Throughput_CondvarQueue(benchmark::State& state) {
   for (auto _ : state) {
@@ -226,8 +228,12 @@ void ping_pong(benchmark::State& state) {
   }
 }
 
-void BM_PingPong_SpscQueue(benchmark::State& state) { ping_pong<mr::SpscQueue<Msg>>(state); }
-void BM_PingPong_MutexQueue(benchmark::State& state) { ping_pong<MutexQueue<Msg>>(state); }
+void BM_PingPong_SpscQueue(benchmark::State& state) {
+  ping_pong<mr::SpscQueue<Msg>>(state);
+}
+void BM_PingPong_MutexQueue(benchmark::State& state) {
+  ping_pong<MutexQueue<Msg>>(state);
+}
 
 }  // namespace
 
