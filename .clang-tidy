@@ -1,0 +1,47 @@
+---
+# Library, tools and fuzz targets are checked with these settings (see
+# scripts/lint.sh). Disabled checks are listed with the reason.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-avoid-do-while,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  performance-*,
+  -performance-enum-size,
+  readability-*,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-function-cognitive-complexity,
+  -readability-uppercase-literal-suffix,
+# Rationale for the main exclusions:
+#   pointer arithmetic / constant array index: byte-level codecs and slot
+#     arithmetic are the point of this code; spans are used at API boundaries.
+#   const data members: ring geometry is deliberately immutable after
+#     construction (the classes are neither copyable nor movable).
+#   magic numbers: on-disk offsets are documented next to their use.
+#   enum-size: several enums mirror on-disk field widths on purpose.
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/(include/mr|tools|fuzz)/.*'
+CheckOptions:
+  - key: readability-function-size.LineThreshold
+    value: 200
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+...
