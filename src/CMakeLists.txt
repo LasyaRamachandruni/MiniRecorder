@@ -4,10 +4,12 @@ add_library(minirecorder
   crc32c.cpp
   events.cpp
   format.cpp
+  kitti.cpp
   privacy.cpp
   quality.cpp
   record.cpp
   reader.cpp
+  recorder.cpp
   sensor_types.cpp
   sensors.cpp
   trigger.cpp
