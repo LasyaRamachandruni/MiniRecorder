@@ -21,8 +21,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 BUILD=${1:-$ROOT/build-gcc}
 OUT=${2:-$ROOT/bench/results}
 BIN=$BUILD/tools
-WORK=${MR_BENCH_WORK:-$ROOT/build-bench-work}
-mkdir -p "$OUT" "$WORK"
+mkdir -p "$OUT"
+OUT=$(cd "$OUT" && pwd)
+BIN=$(cd "$BIN" && pwd)
+# Scratch files use a path relative to the repository so the JSON summaries
+# do not record machine-specific absolute paths.
+cd "$ROOT"
+WORK=${MR_BENCH_WORK:-build-bench-work}
+mkdir -p "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 
 log() { echo "[$(date +%H:%M:%S)] $*" >&2; }
