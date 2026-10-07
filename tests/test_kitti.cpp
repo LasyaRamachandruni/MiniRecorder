@@ -73,7 +73,6 @@ TEST(Kitti, LoadsDirectoryAndRecordsIt) {
   cfg.output = dir.file("kitti.mrlog");
   cfg.streams = mr::default_streams();
   cfg.streams.resize(2);  // imu + gps only
-  cfg.streams[0].rate_hz = 10.0;
   cfg.kitti_oxts_dir = oxts;
   cfg.kitti_loop = false;
   cfg.pacing = mr::Pacing::kUnpaced;
@@ -86,6 +85,8 @@ TEST(Kitti, LoadsDirectoryAndRecordsIt) {
 
   auto reader = mr::Reader::open(cfg.output);
   ASSERT_TRUE(reader);
+  // The stream rate is taken from the dataset (10 Hz here), not the default.
+  EXPECT_NEAR(reader->stream_info(0)->nominal_rate_hz, 10.0, 0.01);
   EXPECT_EQ(reader->stream_stats(0)->records, 20U);
   EXPECT_EQ(reader->stream_stats(1)->records, 20U);
   mr::ReadOptions only_gps;

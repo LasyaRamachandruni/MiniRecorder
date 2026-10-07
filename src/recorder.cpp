@@ -294,6 +294,24 @@ Result<std::unique_ptr<Recorder>> Recorder::create(RecorderConfig config) {
       return std::move(loaded).error();
     }
     kitti_samples = std::move(loaded).value();
+    // Monitor and label the replayed streams with the dataset's real rate
+    // (10 Hz for synced KITTI drives, ~100 Hz for unsynced ones).
+    const auto& samples = *kitti_samples;
+    if (samples.size() > 1 && samples.back().timestamp_ns > 0) {
+      const double hz = static_cast<double>(samples.size() - 1) * 1e9 /
+                        static_cast<double>(samples.back().timestamp_ns);
+      bool imu_done = false;
+      bool gps_done = false;
+      for (StreamSetup& s : cfg.streams) {  // the first IMU and GPS streams are fed by KITTI
+        if (s.kind == SensorKind::kImu && !imu_done) {
+          s.rate_hz = hz;
+          imu_done = true;
+        } else if (s.kind == SensorKind::kGps && !gps_done) {
+          s.rate_hz = hz;
+          gps_done = true;
+        }
+      }
+    }
   }
 
   std::vector<MonitoredStream> monitored;
